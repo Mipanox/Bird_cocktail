@@ -14,19 +14,11 @@ import subprocess
 import glob
 import numpy as np
 import pandas as pd
+from collections import OrderedDict
 
 """
  ----------Macaulay Library----------
 """
-
-import urllib2
-import re
-from bs4 import BeautifulSoup as Soup
-
-import subprocess
-import glob
-import numpy as np
-import pandas as pd
 
 class ML_dn(object):
     def __init__(self,preurl,num_spe=100,ass_preurl='https://macaulaylibrary.org/asset/',read_in=True,pglim=None):
@@ -179,7 +171,7 @@ class ML_dn(object):
 
         ## sort decending according to freq of occurrence
         self.spenmlist_one.sort(key=lambda x: cp.count(x), reverse=True)
-        self.spenmlist_one = list(set(self.spenmlist_one))
+        self.spenmlist_one = list(OrderedDict.fromkeys(self.spenmlist_one))
         
         return self.spenmlist_one
     
@@ -325,7 +317,7 @@ class XC_dn(object):
 
         ## sort decending according to freq of occurrence
         self.spenmlist_one.sort(key=lambda x: cp.count(x), reverse=True)
-        self.spenmlist_one = list(set(self.spenmlist_one))
+        self.spenmlist_one = list(OrderedDict.fromkeys(self.spenmlist_one))
         
         return self.spenmlist_one
     
