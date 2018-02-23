@@ -97,7 +97,7 @@ class ML_dn(object):
         from selenium import webdriver
         from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
-        profile = FirefoxProfile()
+        profile = FirefoxProfile('/Users/jasonhc/Library/Application Support/Firefox/Profiles/q20kmjze.default')
         profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream, text/csv")
         driver = webdriver.Firefox(firefox_profile=profile)
         
