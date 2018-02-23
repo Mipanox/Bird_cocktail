@@ -132,12 +132,12 @@ class ML_dn(object):
             
             subprocess.call(['cd '+path_mp3],shell=True)
             for sp in sinname:
-                subprocess.call(['mkdir '+sp],shell=True)
+                subprocess.call(['mkdir '+path_mp3+'/'+sp],shell=True)
     
             for i,cat in enumerate(catalog):
                 subprocess.call(['curl -s https://download.ams.birds.cornell.edu/api/v1/asset/'+str(cat)+ \
                                  ' > '+str(comname[i])+str(i+1).zfill(3)+'.mp3'],shell=True)
-                subprocess.call(['mv '+str(comname[i])+str(i+1).zfill(3)+'.mp3 '+str(comname[i])+'/'],shell=True)
+                subprocess.call(['mv '+str(comname[i])+str(i+1).zfill(3)+'.mp3 '+path_mp3+'/'+str(comname[i])+'/'],shell=True)
             
     ##############################   
     def _url_pages(self,preurl,pglim=10000):
@@ -253,7 +253,7 @@ class XC_dn(object):
         return self.spenmlist
     
     #--- Download mp3
-    def dn_mp3(self,num_lim=True):
+    def dn_mp3(self,num_lim=True,**kwargs):
         """
         Download mp3 according to the species search page
         """
@@ -265,7 +265,7 @@ class XC_dn(object):
             if num_lim and k > self.num_spe:
                 break            
             ## obtain all pages of this species          
-            urll, content = self._url_pages(self.speurl+spe)
+            urll, content = self._url_pages(self.speurl+spe,**kwargs)
             
             l = 0
             for i,cnt in enumerate(content):
@@ -275,11 +275,11 @@ class XC_dn(object):
                 for j in range(len(st)):                    
                     try:                     
                         dnurl = re.search('filepath="//(.+?)mp3"', str(st[j])).group(1)                    
-                        ## download
-                        subprocess.call(['curl -s '+dnurl+'mp3'\
-                                         ' > '+str(spe.replace('+',''))+str(l+1).zfill(3)+'.mp3'],shell=True)
-                        subprocess.call(['mv '+str(spe.replace('+',''))+str(l+1).zfill(3)+'.mp3 '+\
-                                               str(spe.replace('+',''))+'/'],shell=True)
+                        ## download                        
+                        subprocess.call(['curl -s '+'https://'+dnurl+'mp3'\
+                                         ' > '+str(spe.replace('+','').replace("'","%27"))+str(l+1).zfill(3)+'.mp3'],shell=True)
+                        subprocess.call(['mv '+str(spe.replace('+','').replace("'","%27"))+str(l+1).zfill(3)+'.mp3 '+\
+                                               str(spe.replace('+','').replace("'","%27"))+'/'],shell=True)
                         l += 1
                     except:
                         continue
