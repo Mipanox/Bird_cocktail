@@ -126,15 +126,16 @@ class ML_dn(object):
             catalog = np.asarray(f['ML Catalog #'])
             comname = np.asarray(f['Common Name'])
             comname = [re.sub("[\(\[].*?[\)\]]", "", name).rstrip().lstrip().\
-                       replace(' ','').replace("'","").replace('/','-') for name in comname]
+                       replace(' ','').replace("'","").replace('/','-').replace(';','_') for name in comname]
             
             sinname = list(set(comname))            
             
-            subprocess.call(['cd '+path_mp3],shell=True)
-            for sp in sinname:
+            #subprocess.call(['cd '+path_mp3],shell=True)
+            for sp in sinname:                
                 subprocess.call(['mkdir '+path_mp3+'/'+sp],shell=True)
-    
+            
             for i,cat in enumerate(catalog):
+                print 'Current species:'+str(comname[i])
                 subprocess.call(['curl -s https://download.ams.birds.cornell.edu/api/v1/asset/'+str(cat)+ \
                                  ' > '+str(comname[i])+str(i+1).zfill(3)+'.mp3'],shell=True)
                 subprocess.call(['mv '+str(comname[i])+str(i+1).zfill(3)+'.mp3 '+path_mp3+'/'+str(comname[i])+'/'],shell=True)
@@ -253,19 +254,21 @@ class XC_dn(object):
         return self.spenmlist
     
     #--- Download mp3
-    def dn_mp3(self,num_lim=True,**kwargs):
+    def dn_mp3(self,num_lim=True,path_mp3='.',**kwargs):
         """
         Download mp3 according to the species search page
         """
         
         ## create directories for species
-        self._make_dir_spe()
+        self._make_dir_spe(path=path_mp3)
         
         for k,spe in enumerate(self.spenmlist_one):
             if num_lim and k > self.num_spe:
                 break            
+            
+            print "Current species: "+str(spe)
             ## obtain all pages of this species          
-            urll, content = self._url_pages(self.speurl+spe,**kwargs)
+            urll, content = self._url_pages(self.speurl+spe,printpg=False,**kwargs)
             
             l = 0
             for i,cnt in enumerate(content):
@@ -273,27 +276,28 @@ class XC_dn(object):
                 st = s.findAll(class_='jp-type-single')
                 
                 for j in range(len(st)):                    
-                    try:                     
+                    try:
                         dnurl = re.search('filepath="//(.+?)mp3"', str(st[j])).group(1)                    
                         ## download                        
                         subprocess.call(['curl -s '+'https://'+dnurl+'mp3'\
                                          ' > '+str(spe.replace('+','').replace("'","%27"))+str(l+1).zfill(3)+'.mp3'],shell=True)
                         subprocess.call(['mv '+str(spe.replace('+','').replace("'","%27"))+str(l+1).zfill(3)+'.mp3 '+\
-                                               str(spe.replace('+','').replace("'","%27"))+'/'],shell=True)
+                                               path_mp3+'/'+str(spe.replace('+','').replace("'","%27"))+'/'],shell=True)
                         l += 1
                     except:
                         continue
                 
         
     ###################################
-    def _url_pages(self,preurl,pglim=10000):
+    def _url_pages(self,preurl,pglim=10000,printpg=True):
         """
         Create list of all pages from a Xeno-Canto library archival search pre-url
         """
         pg = 1
         urllist, content = [],[]
         for i in range(pglim):
-            if not (pg%10): print 'Current page: %d'%pg
+            if printpg: 
+                if not (pg%10): print 'Current page: %d'%pg
             try:
                 urllist.append(preurl+'&pg='+str(pg))
                 content.append(urllib2.urlopen(urllist[pg-1]).read())
@@ -321,11 +325,11 @@ class XC_dn(object):
         
         return self.spenmlist_one
     
-    def _make_dir_spe(self,num_lim=True):
+    def _make_dir_spe(self,num_lim=True,path='.'):
         """
         Make directories for species to be downloaded
         """
         for i,spe in enumerate(self.spenmlist_one):
             if num_lim and i > self.num_spe:
                 break
-            subprocess.call(['mkdir '+spe.replace('+','')],shell=True)
+            subprocess.call(['mkdir '+path+'/'+spe.replace('+','').replace("'","%27")],shell=True)
