@@ -89,7 +89,7 @@ class ML_dn(object):
         
         return self.spenmlist
     
-    def get_specsv(self):
+    def get_specsv(self,profile_path='/Users/jasonhc/Library/Application Support/Firefox/Profiles/q20kmjze.default'):
         """
         Download csv for a given search result url.
         Default: https://search.macaulaylibrary.org/catalog?view=Grid&req=true&mediaType=a&q=<species>
@@ -97,7 +97,7 @@ class ML_dn(object):
         from selenium import webdriver
         from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
-        profile = FirefoxProfile('/Users/jasonhc/Library/Application Support/Firefox/Profiles/q20kmjze.default')
+        profile = FirefoxProfile(profile_path)
         profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream, text/csv")
         driver = webdriver.Firefox(firefox_profile=profile)
         
