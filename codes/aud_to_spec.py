@@ -19,7 +19,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--src_dir"  , dest="src_dir")
 parser.add_option("--spec_dir" , dest="spec_dir")
-parser.add_option("--threshold", dest="threshold", default=30)
+parser.add_option("--threshold", dest="threshold", default=14.)
 (options, args) = parser.parse_args()
 
 ## paths
@@ -109,10 +109,11 @@ def hasBird(spec, raw_thresh=10., threshold=threshold):
       Changeable via command-line option (see above)
     """
     ## working copy
-    img = spec.copy().astype(np.float32)
+    img = spec.copy()
     
     ### STEP 0: get rid of highest/lowest freq bins
-    img = img[20:100,:] # total of 128 bins
+    #-- total of 128 bins, to integer vals due to JPEG format
+    img = img[20:100,:].astype(int).astype(np.float32)
     
     bird, rthresh = False, 0. # if too weak, treat as no signal no matter what
     if img.max() > raw_thresh: # absolute value of maximum signal
