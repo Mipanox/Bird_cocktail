@@ -185,16 +185,17 @@ if __name__ == "__main__":
                     if not os.path.exists(dst_dir):
                         os.makedirs(dst_dir)
                     
-                    ## write spec to target dir
-                    file_path = dst_dir+str(thresh) + "_" + aud.split("/")[-1].rsplit(".")[0] + \
-                                                      "_" + str(spec_cnt) + ".jpg"
-                    ### PIL prevents auto-rescaling to [0,255]
-                    img = Image.fromarray(spec)
-                    img = img.convert('L')          # to grey scale
-                    img.save(file_path, quality=95) # minimal distortion
+                    if spec.shape[1] > 192: # for cropping. specified minlen only assures len in sec not sampling
+                        ## write spec to target dir
+                        file_path = dst_dir+str(thresh) + "_" + aud.split("/")[-1].rsplit(".")[0] + \
+                                                          "_" + str(spec_cnt) + ".jpg"
+                        ### PIL prevents auto-rescaling to [0,255]
+                        img = Image.fromarray(spec)
+                        img = img.convert('L')          # to grey scale
+                        img.save(file_path, quality=95) # minimal distortion
                     
-                    spec_cnt  += 1
-                    tot_specs += 1
+                        spec_cnt  += 1
+                        tot_specs += 1
 
                 ## exceeds spec limit?
                 if tot_specs >= MAX_SPECS and MAX_SPECS > -1:
