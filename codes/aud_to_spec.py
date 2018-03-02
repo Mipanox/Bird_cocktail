@@ -13,7 +13,7 @@ import cv2
 import librosa
 from tqdm import tqdm
 import scipy.ndimage as ndimage
-import scipy.misc as mc
+from PIL import Image
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -95,47 +95,56 @@ def getMultiSpec(path, seconds=3., overlap=2.5, minlen=3., **kwargs):
         yield magspec
 
 
-def hasBird(spec, threshold=threshold):
+def hasBird(spec, raw_thresh=10., threshold=threshold):
     """
     Decide if given spectrum shows bird sounds or noise only
     
     Options:
+    - raw_thresh : float
+      Threshold for the absolute value of signal before fancy processing
+      Defaults to 10
+    
     - threshold : float
       Threshold value for separating real signal / noise. Defaults to 30.
       Changeable via command-line option (see above)
     """
     ## working copy
     img = spec.copy().astype(np.float32)
-
+    
     ### STEP 0: get rid of highest/lowest freq bins
     img = img[20:100,:] # total of 128 bins
     
-    ### STEP 1: Median blur
-    img = cv2.medianBlur(img,5)
-
-    ### STEP 2: Median threshold
-    col_median = np.median(img, axis=0, keepdims=True)
-    row_median = np.median(img, axis=1, keepdims=True)
-
-    img[img < row_median * 3] = 0.
-    img[img < col_median * 4] = 0.
-    img[img > 0] = 1.
-
-    #### STEP 3: Morph Closing
-    img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, np.ones((5,5), np.float32))
+    bird, rthresh = False, 0. # if too weak, treat as no signal no matter what
+    if img.max() > raw_thresh: # absolute value of maximum signal
+        ### STEP 1: normalize to [0,1] for processing
+        img -= img.min()
+        img /= img.max()
     
-    ### STEP 4: Count columns and rows with signal
-    #-- (Note: We only use rows with signal as threshold -- time axis for fixed freqs)
+        ### STEP 2: Median blur
+        img = cv2.medianBlur(img,5)
+
+        ### STEP 3: Median threshold
+        col_median = np.median(img, axis=0, keepdims=True)
+        row_median = np.median(img, axis=1, keepdims=True)
+
+        img[img < row_median * 3] = 0.
+        img[img < col_median * 4] = 0.
+        img[img > 0.] = 1.
+
+        ### STEP 4: Morph Closing
+        img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, np.ones((5,5), np.float32))
     
-    ##### row has signal?
-    row_max = np.max(img, axis=1)
-    row_max = ndimage.morphology.binary_dilation(row_max, iterations=2).astype(row_max.dtype)
-    rthresh = row_max.sum()
+        ### STEP 5: Count columns and rows with signal
+        #-- (Note: We only use rows with signal as threshold -- time axis for fixed freqs)
     
-    ### STEP 5: Apply threshold
-    bird = True
-    if rthresh < threshold:
-        bird = False
+        ##### row has signal?
+        row_max = np.max(img, axis=1)
+        row_max = ndimage.morphology.binary_dilation(row_max, iterations=2).astype(row_max.dtype)
+        rthresh = row_max.sum()
+    
+        ### STEP 6: Apply threshold
+        if rthresh >= threshold:
+            bird = True
     
     return bird, rthresh
 
@@ -178,8 +187,10 @@ if __name__ == "__main__":
                     ## write spec to target dir
                     file_path = dst_dir+str(thresh) + "_" + aud.split("/")[-1].rsplit(".")[0] + \
                                                       "_" + str(spec_cnt) + ".jpg"
-                    ### scipy will autoscale, but we can change later
-                    mc.imsave(file_path, spec)
+                    ### PIL prevents auto-rescaling to [0,255]
+                    img = Image.fromarray(spec)
+                    img = img.convert('L')          # to grey scale
+                    img.save(file_path, quality=95) # minimal distortion
                     
                     spec_cnt  += 1
                     tot_specs += 1
