@@ -142,6 +142,8 @@ class BirdFolder(ImageFolder):
         tot_len = self.__len__()
         
         ## initialize superposed img array as the noise
+        np.random.seed(index) # use index as random seed to ensure reproducibility
+        
         path  = self.noise_imgs[np.random.randint(0,tot_len/self.aug_factor)]
         noise = self.loader(path)
         if self.transform is not None:          
@@ -151,8 +153,7 @@ class BirdFolder(ImageFolder):
         tar_res_lt = []
         
         ##
-        if self.mixing: # if synthesizing spectrograms randomly
-            np.random.seed(index) # use index as random seed to ensure reproducibility
+        if self.mixing: # if synthesizing spectrograms randomly            
             num_item = np.random.randint(1,self.num_mix+1) # min 1 bird, max 5 birds
             strength = np.random.rand(num_item) # weights of superposed species
             #                                     (note this is in intensity)
