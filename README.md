@@ -9,6 +9,8 @@ _Stanford CS230 Win2018 project_
   - [Data Preparation](https://github.com/Mipanox/Bird_cocktail#data-preparation)
   - [Data Pre-processing](https://github.com/Mipanox/Bird_cocktail#data-pre-processing)
   - [Data Augmentation and Mixing](https://github.com/Mipanox/Bird_cocktail#data-augmentation-and-sampling)
+### 2. Train the Model
+  - [Build train/val/test sets]()
 
 ---
 ## Introduction
@@ -52,7 +54,7 @@ This [notebook](https://github.com/Mipanox/Bird_cocktail/blob/master/notebooks/d
 
 After preparing the audio files for individual species as described above (you may otherwise obtain your datasets, but they have to be arranged in the same way), they will have been arranged in this structure:
 ```
-dataset   
+RAW dataset   
 ¦
 +---species1
 ¦   ¦   spe1_file001.mp3
@@ -78,3 +80,48 @@ _(It is also possible to select different arguments for various functions: ... t
 ### Data Augmentation and Sampling
 Although data augmentation and sampling are done on-the-fly when training/evaluating the model, we decide to outline the underlying processes here. Refer to this [notebook](https://github.com/Mipanox/Bird_cocktail/blob/master/notebooks/data_loading.ipynb) for details.
 
+
+_[(back to top)](https://github.com/Mipanox/Bird_cocktail#content)_
+
+---
+## 2. Train the Model
+### Build datasets
+Up to this point, you should've gone through [obtaining data](https://github.com/Mipanox/Bird_cocktail#data-preparation) (in `mp3` or `wav`) and [pre-processing](https://github.com/Mipanox/Bird_cocktail#data-pre-processing), ending up with a folder containing spectrograms of each species:
+```
+dataset   
+¦
++---species1
+¦   ¦   spe1_spec001.jpg
+¦   ¦   spe1_spec002.jpg
+¦   ¦   ...
+¦   
++---species2
+¦   ¦   spe2_spec001.jpg
+¦   ¦   spe2_spec002.jpg
+¦   ¦   ...
+¦    
++---...
+```
+Now, run the next line to shuffle and split the data into train/val/test sets:
+```
+python build_dataset.py --data_dir <path_to_preprocessed_data> --output_dir <path_to_desired_splitted_datasets>
+```
+You will have copied your spectrograms to something like:
+```
+split_dir   
+¦
++---train/
+¦   ¦   species1
+¦   ¦   ¦   spe1_spec001.jpg
+¦   ¦   ¦   spe1_spec002.jpg
+¦   ¦   ...
+¦   
++---val/
+¦   ¦   species1
+¦   ¦   ¦   spe1_spec003.jpg
+¦   ¦   ¦   spe1_spec004.jpg
+¦   ¦   ...
+¦    
++---test/
+
+```
