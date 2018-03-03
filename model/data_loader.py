@@ -84,8 +84,19 @@ class BirdFolder(ImageFolder):
      http://pytorch.org/docs/master/torchvision/datasets.html#imagefolder
     """
 
-    def __init__(self, root, noise_root, transform=None, target_transform=None,
+    def __init__(self, root, noise_root, aug_factor=1, mixing=True, num_mix=5,
+                 transform=None, target_transform=None,
                  loader=default_loader):
+        """
+        Options:
+        - aug_factor : integer
+          If number of original dataset is N, generates N * aug_factor datasets
+          Must be 1 if mixing is False
+          
+        - mixing : bool
+        - num_mix : integer
+          If mixing = True, synthesize num_mix randomized bird sounds
+        """
         
         classes, class_to_idx = find_classes(root)
         imgs       = make_dataset( root, class_to_idx)
@@ -98,62 +109,82 @@ class BirdFolder(ImageFolder):
         self.root = root
         self.imgs = imgs
         self.noise_imgs = noise_imgs
+        self.aug_factor = aug_factor
+        self.mixing  = mixing
+        self.num_mix = num_mix
         self.classes = classes
         self.class_to_idx = class_to_idx
         self.transform = transform
         self.target_transform = target_transform
         self.loader = grey_loader
         
+        ##
+        assert isinstance(self.aug_factor, int), "aug_factor must be an integer"
+        assert isinstance(self.num_mix, int), "num_mix must be an integer"
+        if not self.mixing and (self.aug_factor > 1):            
+            raise ValueError('No mixing is mutually exclusive with aug_factor > 1')
+            
+    def __len__(self):
+        return len(self.imgs) * self.aug_factor
+        
     def __getitem__(self, index):
         """
         Args:
             index (int): Index
         Returns:
-            tuple: (image, target) where target is class_index of the target class.
+            tuple: (image, target) where target is multi-hot vector of the target class.
         """
         tot_len = self.__len__()
-        num_item = np.random.randint(1,5+1) # min 1 bird, max 5 birds
-        strength = np.random.rand(num_item) # weights of superposed species
-        #                                     (note this is in intensity)
         
         ## initialize superposed img array as the noise
-        path  = self.noise_imgs[index]
+        path  = self.noise_imgs[np.random.randint(0,tot_len/self.aug_factor)]
         noise = self.loader(path)
-        if self.transform is not None:            
+        if self.transform is not None:          
             noise = self.transform(noise)
         
         img_res_ar = np.array(noise) * 0.1  # not too strong        
         tar_res_lt = []
-        for num in range(num_item):
-            idx = np.random.randint(0,tot_len)
+        
+        ##
+        if self.mixing: # if synthesizing spectrograms randomly
+            num_item = np.random.randint(1,self.num_mix+1) # min 1 bird, max 5 birds
+            strength = np.random.rand(num_item) # weights of superposed species
+            #                                     (note this is in intensity)
+            for num in range(num_item):
+                idx = np.random.randint(0,tot_len/self.aug_factor)
             
-            ## load image
-            path, target = self.imgs[idx]
-            img = self.loader(path)            
+                ## load image
+                path, target = self.imgs[idx]
+                img = self.loader(path)            
+                if self.transform is not None:
+                    img = self.transform(img)
+                
+                ## array
+                img_res_ar += np.array(img)*strength[num]
+                tar_res_lt.append(target)
+        
+            ## rescaling to [0,255]
+            img_res_ar -=  img_res_ar.min()
+            img_res_ar /= (img_res_ar.max() / 255)        
+            
+        else:
+            path, target = self.imgs[index]
+            img = self.loader(path)
             if self.transform is not None:
                 img = self.transform(img)
-            if self.target_transform is not None:
-                target = self.target_transform(target)
-            
-            ## array
-            img_res_ar += np.array(img)*strength[num]
+                
+            img_res_ar += np.array(img)
             tar_res_lt.append(target)
-        
-        ## rescaling to [0,255]
-        img_res_ar -=  img_res_ar.min()
-        img_res_ar /= (img_res_ar.max() / 255)        
-        
-        #img_res_ar = np.transpose(img_res_ar,(2,0,1))
+            
         img = transforms.ToTensor().__call__(img_res_ar.transpose(1,2,0)) # back to [0,1]
-        
-        tar_res_lt = sorted(set(tar_res_lt))
+        tar_res_lt = code_to_vec(sorted(set(tar_res_lt)),self.classes)
         
         return img, tar_res_lt
 
 #################
 ## data loader ##
 
-def fetch_dataloader(types, data_dir, params=None):
+def fetch_dataloader(types, data_dir, params):
     """
     Fetches the DataLoader object for each type in types from data_dir.
 
@@ -174,10 +205,16 @@ def fetch_dataloader(types, data_dir, params=None):
 
             # use the train_transformer if training data, else use eval_transformer without random flip
             if split == 'train':
-                dl = DataLoader(BirdFolder(path, noise_path, train_transformer), shuffle=True)
+                dl = DataLoader(BirdFolder(path, noise_path, train_transformer),
+                                batch_size=params.batch_size, shuffle=True,
+                                num_workers=params.num_workers,
+                                pin_memory=params.cuda)
             else:
-                dl = DataLoader(BirdFolder(path, noise_path, eval_transformer ), shuffle=False)
+                dl = DataLoader(BirdFolder(path, noise_path, eval_transformer), 
+                                batch_size=params.batch_size, shuffle=False,
+                                num_workers=params.num_workers,
+                                pin_memory=params.cuda)
 
             dataloaders[split] = dl
 
-    return dataloaders        
+    return dataloaders
