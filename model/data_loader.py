@@ -143,7 +143,7 @@ class BirdFolder(ImageFolder):
         
         ## initialize superposed img array as the noise
         np.random.seed(index) # use index as random seed to ensure reproducibility
-        
+
         path  = self.noise_imgs[np.random.randint(0,tot_len/self.aug_factor)]
         noise = self.loader(path)
         if self.transform is not None:          
@@ -191,7 +191,7 @@ class BirdFolder(ImageFolder):
 #################
 ## data loader ##
 
-def fetch_dataloader(types, data_dir, params):
+def fetch_dataloader(types, data_dir, params, **kwargs):
     """
     Fetches the DataLoader object for each type in types from data_dir.
 
@@ -212,17 +212,17 @@ def fetch_dataloader(types, data_dir, params):
 
             # use the train_transformer if training data, else use eval_transformer without random flip
             if split == 'train':
-                dl = DataLoader(BirdFolder(path, noise_path, train_transformer),
+                dl = DataLoader(BirdFolder(path, noise_path, train_transformer, **kwargs),
                                 batch_size=params.batch_size, shuffle=True,
                                 num_workers=params.num_workers,
                                 pin_memory=params.cuda)
             elif split == 'val':
-                dl = DataLoader(BirdFolder(path, noise_path, eval_transformer), 
+                dl = DataLoader(BirdFolder(path, noise_path, eval_transformer, **kwargs), 
                                 batch_size=params.batch_size, shuffle=False,
                                 num_workers=params.num_workers,
                                 pin_memory=params.cuda)
             else: # test
-                dl = DataLoader(BirdFolder(path, noise_path, test_transformer), 
+                dl = DataLoader(BirdFolder(path, noise_path, test_transformer, **kwargs), 
                                 batch_size=params.batch_size, shuffle=False,
                                 num_workers=params.num_workers,
                                 pin_memory=params.cuda)
