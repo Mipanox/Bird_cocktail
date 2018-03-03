@@ -41,7 +41,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir'  , help="Directory with the pre-processed dataset")
 parser.add_argument('--output_dir', help="Directory to write train/val/test split")
 parser.add_argument('--train_per' , help="Percentage of training set", default=98, type=float)
-parser.add_argument('--max_spec'  , help="Maximum number of species for the model", default=200, type=int)
+parser.add_argument('--max_spec'  , help="Maximum number of species for the model", default=300, type=int)
 
 
 #####################
