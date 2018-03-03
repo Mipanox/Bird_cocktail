@@ -19,7 +19,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--src_dir"  , dest="src_dir")
 parser.add_option("--spec_dir" , dest="spec_dir")
-parser.add_option("--threshold", dest="threshold", default=14.)
+parser.add_option("--threshold", dest="threshold", default=14., type="float")
 (options, args) = parser.parse_args()
 
 ## paths
@@ -177,7 +177,7 @@ if __name__ == "__main__":
                     
                     ## new target path -> rejected specs will be copied to "noise" folder
                     if isbird:
-                        dst_dir = spec_dir + bird.split("/")[-2] + "/"
+                        dst_dir = spec_dir + bird.split("/")[-2].replace('%27s','') + "/"
                     else:
                         dst_dir = spec_dir + "noise/" + bird.split("/")[-2] + "/"
                     
