@@ -106,7 +106,11 @@ Now, run the next line to shuffle and split the data into train/val/test sets:
 ```
 python build_dataset.py --data_dir <path_to_preprocessed_data> --output_dir <path_to_desired_splitted_datasets>
 ```
-You will have copied your spectrograms to something like:
+There are two more options that you can tune:
+- `--train_per`: Percentage of training set, defaults to 98 (train/val/test = 98/1/1)
+- `--max_spec`: Maximum number of species for the model, sorted by richness of data (number of spectrograms available). Defaults to 300. This one should be fixed according to your needs. For example, if you want your model to specialize in the birds in Stanford, you don't need many species (but of course the species in the dataset must come from the same region you're interested in. You're only throwing away "less common" ones or "rarities")
+
+You will then have copied your spectrograms to something like:
 ```
 split_dir   
 ¦
