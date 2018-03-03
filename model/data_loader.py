@@ -29,6 +29,11 @@ eval_transformer = transforms.Compose([
     transforms.RandomCrop((128, 192)), # keep freq axis (0) fixed to 128
     transforms.ToTensor()])            # transform it into a torch tensor
 
+## loader for test (possibly different from train_transformer...)
+test_transformer = transforms.Compose([
+    transforms.RandomCrop((128, 192)), # keep freq axis (0) fixed to 128
+    transforms.ToTensor()])            # transform it into a torch tensor
+
 
 ######################
 ## Helper functions ##
@@ -147,6 +152,7 @@ class BirdFolder(ImageFolder):
         
         ##
         if self.mixing: # if synthesizing spectrograms randomly
+            np.random.seed(index) # use index as random seed to ensure reproducibility
             num_item = np.random.randint(1,self.num_mix+1) # min 1 bird, max 5 birds
             strength = np.random.rand(num_item) # weights of superposed species
             #                                     (note this is in intensity)
@@ -209,8 +215,13 @@ def fetch_dataloader(types, data_dir, params):
                                 batch_size=params.batch_size, shuffle=True,
                                 num_workers=params.num_workers,
                                 pin_memory=params.cuda)
-            else:
+            elif split == 'val':
                 dl = DataLoader(BirdFolder(path, noise_path, eval_transformer), 
+                                batch_size=params.batch_size, shuffle=False,
+                                num_workers=params.num_workers,
+                                pin_memory=params.cuda)
+            else: # test
+                dl = DataLoader(BirdFolder(path, noise_path, test_transformer), 
                                 batch_size=params.batch_size, shuffle=False,
                                 num_workers=params.num_workers,
                                 pin_memory=params.cuda)
