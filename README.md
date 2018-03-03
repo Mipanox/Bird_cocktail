@@ -10,7 +10,7 @@ _Stanford CS230 Win2018 project_
   - [Data Pre-processing](https://github.com/Mipanox/Bird_cocktail#data-pre-processing)
   - [Data Augmentation and Mixing](https://github.com/Mipanox/Bird_cocktail#data-augmentation-and-sampling)
 ### 2. Train the Model
-  - [Build train/val/test sets]()
+  - [Build train/val/test sets](https://github.com/Mipanox/Bird_cocktail#build-datasets)
 
 ---
 ## Introduction
