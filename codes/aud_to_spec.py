@@ -177,9 +177,9 @@ if __name__ == "__main__":
                     
                     ## new target path -> rejected specs will be copied to "noise" folder
                     if isbird:
-                        dst_dir = spec_dir + bird.split("/")[-2].replace('%27s','') + "/"
+                        dst_dir = spec_dir + bird.split("/")[-2].replace('%27','') + "/"
                     else:
-                        dst_dir = spec_dir + "noise/" + bird.split("/")[-2] + "/"
+                        dst_dir = spec_dir + "noise/" + bird.split("/")[-2].replace('%27','') + "/"
                     
                     ## make target dir
                     if not os.path.exists(dst_dir):
