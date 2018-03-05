@@ -11,8 +11,8 @@ import numpy as np
 from PIL import Image
 import torch
 from torch.utils.data import Dataset, DataLoader
-from torchvision.datasets import ImageFolder
 from torchvision.datasets import *
+from torchvision.datasets.folder import *
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
@@ -132,41 +132,6 @@ def hasBird(spec, raw_thresh=10., threshold=30.):
 ###################################################################################
 #--- some ImageFolder source codes and data_loader definitions
 #     https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py
-IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
-
-def is_image_file(filename):
-    """Checks if a file is an image.
-    Args:
-        filename (string): path to a file
-    Returns:
-        bool: True if the filename ends with a known image extension
-    """
-    filename_lower = filename.lower()
-    return any(filename_lower.endswith(ext) for ext in IMG_EXTENSIONS)
-
-def find_classes(dir):
-    classes = [d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d))]
-    classes.sort()
-    class_to_idx = {classes[i]: i for i in range(len(classes))}
-    return classes, class_to_idx
-
-
-def make_dataset(dir, class_to_idx):
-    images = []
-    dir = os.path.expanduser(dir)
-    for target in sorted(os.listdir(dir)):
-        d = os.path.join(dir, target)
-        if not os.path.isdir(d):
-            continue
-
-        for root, _, fnames in sorted(os.walk(d)):
-            for fname in sorted(fnames):
-                if is_image_file(fname):
-                    path = os.path.join(root, fname)
-                    item = (path, class_to_idx[target])
-                    images.append(item)
-
-    return images
 
 def grey_loader(path):
     """
