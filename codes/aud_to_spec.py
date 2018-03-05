@@ -89,10 +89,13 @@ def getMultiSpec(path, seconds=3., overlap=2.5, minlen=3., **kwargs):
     
     #--
     ## calculate spectrogram for each split
+    magspec_ = []
     for sig in sig_splits:
         magspec = getSpec(sig, rate, **kwargs)
 
-        yield magspec
+        magspec_.append(magspec)
+
+    return magspec_
 
 
 def hasBird(spec, raw_thresh=10., threshold=threshold):
