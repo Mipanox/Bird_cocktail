@@ -16,6 +16,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision.datasets import ImageFolder
 from torchvision.datasets import *
+from torchvision.datasets.folder import *
 import torchvision.transforms as transforms
 
 
