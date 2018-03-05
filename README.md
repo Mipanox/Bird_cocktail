@@ -71,11 +71,18 @@ RAW dataset
 ```
 
 Then, run the following code, specifying the paths of RAW audios as well as the destination for spectrograms:
+1. Serial:
 ```
 python codes/aud_to_spec.py --src_dir <path_to_raw_audios> --spec_dir <path_to_spec_destination>
 ```
 
-_(It is also possible to select different arguments for various functions: ... threshold...)_
+2. Parallel - If run on multiple CPUs, use the other pre-processing code:
+```
+pytho codes/aud_to_spec_parallel.py --src_dir <path_to_raw_audios> --spec_dir <path_to_spec_destination>
+```
+_(Note1: We assume that parallel jobs are executed by specifying number of CPUs (and/or nodes), which in principle should be detected automatically by the code. Otherwise, one may need to hardcode the number of CPUs used in the code)_
+
+_(Note2:It is also possible to select different arguments for various functions: e.g. threshold for signal/noise discrimination...)_
 
 ### Data Augmentation and Sampling
 Although data augmentation and sampling are done on-the-fly when training/evaluating the model, we decide to outline the underlying processes here. Refer to this [notebook](https://github.com/Mipanox/Bird_cocktail/blob/master/notebooks/data_loading.ipynb) for details.
