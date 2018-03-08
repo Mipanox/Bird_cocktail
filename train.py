@@ -23,6 +23,7 @@ from evaluate import evaluate
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir'    , default='datasets/spec_split'   , help="Directory containing the splitted dataset")
 parser.add_argument('--model_dir'   , default='experiments/base_model', help="Directory containing params.json")
+parser.add_argument('--num_classes' , default=300, type=int, help="Numer of classes as in splitting datasets")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before training")
 
@@ -193,7 +194,7 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model and optimizer
-    model = net.Net(params).cuda() if params.cuda else net.Net(params)
+    model = net.Net(params, args.num_classes).cuda() if params.cuda else net.Net(params, args.num_classes)
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics
