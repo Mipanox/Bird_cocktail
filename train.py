@@ -139,7 +139,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         train(model, optimizer, loss_fn, train_dataloader, metrics, params)
 
         # Evaluate for one epoch on validation set
-        val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params)
+        val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params, args.num_classes)
 
         val_acc = val_metrics['accuracy']
         is_best = val_acc>=best_val_acc
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model and optimizer
-    model = net.Net(params, args.num_classes).cuda() if params.cuda else net.Net(params, args.num_classes)
+    model = net.DenseNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics

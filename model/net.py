@@ -82,7 +82,8 @@ class DenseNetBase(nn.Module):
         growthRate = params.growthRate
         depth      = params.depth
         reduction  = params.reduction
-        bottleneck = params.bottleneck
+        nClasses   = num_classes
+        bottleneck = True #params.bottleneck
 
         nDenseBlocks = (depth-4) // 3
         if bottleneck:
@@ -144,7 +145,7 @@ class DenseNetBase(nn.Module):
         out = self.trans2(self.dense2(out))
         out = self.dense3(out)
         out = torch.squeeze(F.avg_pool2d(F.relu(self.bn1(out)), 8))
-        # out = out.view([out.size()[0], -1])
+        out = out.view([out.size()[0], -1])
         return self.fc(out)
 
 
@@ -161,11 +162,11 @@ def loss_fn(outputs, labels):
         loss (Variable): cross entropy loss for all images in the batch
     """
 
-    if not target.is_same_size(input):
-        raise ValueError("Target size ({}) must be the same as input size ({})".format(target.size(), input.size()))
+    if labels.size() != outputs.size():
+        raise ValueError("Target size ({}) must be the same as input size ({})".format(labels.size(), outputs.size()))
 
-    max_val = (-input).clamp(min=0)
-    loss = input - input * target + max_val + ((-max_val).exp() + (-input - max_val).exp()).log()
+    max_val = (-outputs).clamp(min=0)
+    loss = outputs - outputs * labels + max_val + ((-max_val).exp() + (-outputs - max_val).exp()).log()
     
     return loss.mean()
 

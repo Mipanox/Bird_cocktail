@@ -6,6 +6,5 @@
     "num_workers": 4,
     "growthRate": 12, 
     "depth": 20, 
-    "reduction": 0.5, 
-    "bottleneck": True
+    "reduction": 0.5
 }

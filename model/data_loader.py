@@ -13,6 +13,7 @@ import os
 import numpy as np
 
 from PIL import Image
+import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision.datasets import ImageFolder
 from torchvision.datasets import *
@@ -90,9 +91,8 @@ class BirdFolder(ImageFolder):
      http://pytorch.org/docs/master/torchvision/datasets.html#imagefolder
     """
 
-    def __init__(self, root, noise_root, aug_factor=1, mixing=True, num_mix=5,
-                 transform=None, target_transform=None,
-                 loader=default_loader):
+    def __init__(self, root, noise_root, transform=None, target_transform=None,
+                 aug_factor=1, mixing=True, num_mix=5):
         """
         Options:
         - aug_factor : integer
@@ -173,7 +173,10 @@ class BirdFolder(ImageFolder):
         
             ## rescaling to [0,255]
             img_res_ar -=  img_res_ar.min()
-            img_res_ar /= (img_res_ar.max() / 255)        
+            if img_res_ar.max() == 0:
+                img_res_ar = 0.
+            else:
+                img_res_ar /= (img_res_ar.max() / 255.)
             
         else:
             path, target = self.imgs[index]

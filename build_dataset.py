@@ -102,4 +102,16 @@ if __name__ == '__main__':
                 os.mkdir(spepath)
             cp(filename, spepath)
 
+    # copy noise
+    noisename = os.path.join(args.data_dir, 'noise')
+    if not os.path.exists(noisename):
+            os.mkdir(noisename)
+    else:
+        print("Warning: dir {} already exists".format(noisename))
+
+    noisefiles = [os.path.join(noisename, f) for f in os.listdir(noisename) if f.endswith('.jpg')]
+    print("Copying noise samples to {} ...".format(noisename))
+    for noisefile in tqdm(noisefiles):
+        cp(noisefile, noisefiles)
+
     print("Done building dataset")
