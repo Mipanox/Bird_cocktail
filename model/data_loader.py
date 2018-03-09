@@ -21,22 +21,6 @@ from torchvision.datasets.folder import *
 import torchvision.transforms as transforms
 
 
-## define a training image loader that specifies transforms on images.
-train_transformer = transforms.Compose([
-    transforms.RandomCrop((128, 192)), # keep freq axis (0) fixed to 128
-    transforms.ToTensor()])            # transform it into a torch tensor
-
-## loader for evaluation (possibly different from train_transformer...)
-eval_transformer = transforms.Compose([
-    transforms.RandomCrop((128, 192)), # keep freq axis (0) fixed to 128
-    transforms.ToTensor()])            # transform it into a torch tensor
-
-## loader for test (possibly different from train_transformer...)
-test_transformer = transforms.Compose([
-    transforms.RandomCrop((128, 192)), # keep freq axis (0) fixed to 128
-    transforms.ToTensor()])            # transform it into a torch tensor
-
-
 ######################
 ## Helper functions ##
 
@@ -208,6 +192,23 @@ def fetch_dataloader(types, data_dir, params, **kwargs):
         data: (dict) contains the DataLoader object for each type in types
     """
     dataloaders = {}
+
+    # transformations, tunable
+    ## define a training image loader that specifies transforms on images.
+    train_transformer = transforms.Compose([
+        transforms.RandomCrop((128, params.width)), # keep freq axis (0) fixed to 128
+        transforms.ToTensor()])            # transform it into a torch tensor
+
+    ## loader for evaluation (possibly different from train_transformer...)
+    eval_transformer = transforms.Compose([
+        transforms.RandomCrop((128, params.width)), # keep freq axis (0) fixed to 128
+        transforms.ToTensor()])            # transform it into a torch tensor
+
+    ## loader for test (possibly different from train_transformer...)
+    test_transformer = transforms.Compose([
+        transforms.RandomCrop((128, params.width)), # keep freq axis (0) fixed to 128
+        transforms.ToTensor()])            # transform it into a torch tensor
+
 
     for split in ['train', 'val', 'test']:
         if split in types:

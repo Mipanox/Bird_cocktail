@@ -8,6 +8,7 @@
 """
 
 import numpy as np
+import sklearn.metrics as met
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -95,20 +96,21 @@ class DenseNetBase(nn.Module):
         nChannels += nDenseBlocks*growthRate
         nOutChannels = int(math.floor(nChannels*reduction))
         self.trans1 = Transition(nChannels, nOutChannels)
-
+        
         nChannels = nOutChannels
         self.dense2 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
         nChannels += nDenseBlocks*growthRate
         nOutChannels = int(math.floor(nChannels*reduction))
         self.trans2 = Transition(nChannels, nOutChannels)
-
+        
         nChannels = nOutChannels
         self.dense3 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
         nChannels += nDenseBlocks*growthRate
 
         self.bn1 = nn.BatchNorm2d(nChannels)
-        self.fc = nn.Linear(nChannels, nClasses)
-
+        ##                             input channel determined by dimension of imgs
+        self.fc = nn.Linear(nChannels*(128*params.width)/32**2, nClasses)
+        
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -135,7 +137,7 @@ class DenseNetBase(nn.Module):
     def forward(self, s):
         """
         Args:
-            s: (Variable) contains a batch of images, of dimension batch_size x 128 x 192
+            s: (Variable) contains a batch of images, of dimension batch_size x 1 x 128 x 192
 
         Returns:
             out: (Variable) dimension batch_size x num_classes with the log prob for the labels
@@ -145,30 +147,16 @@ class DenseNetBase(nn.Module):
         out = self.trans2(self.dense2(out))
         out = self.dense3(out)
         out = torch.squeeze(F.avg_pool2d(F.relu(self.bn1(out)), 8))
-        out = out.view([out.size()[0], -1])
+        out = out.view(out.size()[0], -1)
         return self.fc(out)
 
 
-def loss_fn(outputs, labels):
+def loss_fn():
     """
     Multi-label loss function
-    Args:
-        outputs: (Variable) 
-            dimension batch_size x num_classes - output of the model
-        labels: (Variable) 
-            dimension batch_size x num_classes - one/multi-hot vectors
-
-    Returns:
-        loss (Variable): cross entropy loss for all images in the batch
+     sigmoid + binary cross entropy loss for better numerical stability
     """
-
-    if labels.size() != outputs.size():
-        raise ValueError("Target size ({}) must be the same as input size ({})".format(labels.size(), outputs.size()))
-
-    max_val = (-outputs).clamp(min=0)
-    loss = outputs - outputs * labels + max_val + ((-max_val).exp() + (-outputs - max_val).exp()).log()
-    
-    return loss.mean()
+    return nn.BCEWithLogitsLoss()
 
 
 def accuracy(outputs, labels):
@@ -176,13 +164,8 @@ def accuracy(outputs, labels):
     Compute the accuracy given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
-    pred = outputs.data.gt(0.5)
-    tp = (pred + labels.data.byte()).eq(2).sum()
-    fp = (pred - labels.data.byte()).eq(1).sum()
-    fn = (pred - labels.data.byte()).eq(-1).sum()
-    tn = (pred + labels.data.byte()).eq(0).sum()
-    acc = (tp + tn) / (tp + tn + fp + fn)
-
+    outputs = np.greater(outputs,0.5)*1
+    acc = np.mean([met.accuracy_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return acc
 
 def precision(outputs, labels):
@@ -190,17 +173,8 @@ def precision(outputs, labels):
     Compute the precision given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
-    pred = outputs.data.gt(0.5)
-    tp = (pred + labels.data.byte()).eq(2).sum()
-    fp = (pred - labels.data.byte()).eq(1).sum()
-    fn = (pred - labels.data.byte()).eq(-1).sum()
-    tn = (pred + labels.data.byte()).eq(0).sum()
-    acc = (tp + tn) / (tp + tn + fp + fn)
-    try:
-        prec = tp / (tp + fp)
-    except ZeroDivisionError:
-        prec = 0.0
-
+    outputs = np.greater(outputs,0.5)*1
+    prec = np.mean([met.precision_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return prec
 
 def recall(outputs, labels):
@@ -208,17 +182,8 @@ def recall(outputs, labels):
     Compute the recall given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
-    pred = outputs.data.gt(0.5)
-    tp = (pred + labels.data.byte()).eq(2).sum()
-    fp = (pred - labels.data.byte()).eq(1).sum()
-    fn = (pred - labels.data.byte()).eq(-1).sum()
-    tn = (pred + labels.data.byte()).eq(0).sum()
-    acc = (tp + tn) / (tp + tn + fp + fn)
-    try:
-        rec = tp / (tp + fn)
-    except ZeroDivisionError:
-        rec = 0.0
-
+    outputs = np.greater(outputs,0.5)*1
+    rec = np.mean([met.recall_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return rec
 
 ## metrics

@@ -13,6 +13,7 @@ import numpy as np
 import torch
 import torch.optim as optim
 from torch.autograd import Variable
+import torch.nn.functional as F
 from tqdm import tqdm
 
 import utils
@@ -66,7 +67,8 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
 
             # compute model output and loss
             output_batch = model(train_batch)
-            loss = loss_fn(output_batch, labels_batch)
+            ls   = loss_fn()
+            loss = ls(output_batch.float(), labels_batch.float())
 
             # clear previous gradients, compute gradients of all variables wrt loss
             optimizer.zero_grad()
@@ -78,9 +80,9 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
             # Evaluate summaries only once in a while
             if i % params.save_summary_steps == 0:
                 # extract data from torch Variable, move to cpu, convert to numpy arrays
-                output_batch = output_batch.data.cpu().numpy()
+                output_batch = F.sigmoid(output_batch).data.cpu().numpy()
                 labels_batch = labels_batch.data.cpu().numpy()
-
+                
                 # compute all metrics on this batch
                 summary_batch = {metric:metrics[metric](output_batch, labels_batch)
                                  for metric in metrics}
@@ -195,7 +197,8 @@ if __name__ == '__main__':
 
     # Define the model and optimizer
     model = net.DenseNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
-    optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
+    ## optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
+    optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
 
     # fetch loss function and metrics
     loss_fn = net.loss_fn
