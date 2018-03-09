@@ -88,7 +88,6 @@ if __name__ == '__main__':
         print("Warning: output dir {} already exists".format(args.output_dir))
 
     # Preprocess train, val and test
-    """
     for split in ['train', 'val', 'test']:
         output_dir_split = os.path.join(args.output_dir, '{}'.format(split))
         if not os.path.exists(output_dir_split):
@@ -102,7 +101,7 @@ if __name__ == '__main__':
             if not os.path.exists(spepath):
                 os.mkdir(spepath)
             cp(filename, spepath)
-    """
+    
     # copy noise
     noisename = os.path.join(args.data_dir, 'noise')
     noiseout  = os.path.join(args.output_dir, 'noise')
