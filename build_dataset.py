@@ -88,6 +88,7 @@ if __name__ == '__main__':
         print("Warning: output dir {} already exists".format(args.output_dir))
 
     # Preprocess train, val and test
+    """
     for split in ['train', 'val', 'test']:
         output_dir_split = os.path.join(args.output_dir, '{}'.format(split))
         if not os.path.exists(output_dir_split):
@@ -101,17 +102,21 @@ if __name__ == '__main__':
             if not os.path.exists(spepath):
                 os.mkdir(spepath)
             cp(filename, spepath)
-
+    """
     # copy noise
     noisename = os.path.join(args.data_dir, 'noise')
-    if not os.path.exists(noisename):
-            os.mkdir(noisename)
+    noiseout  = os.path.join(args.output_dir, 'noise')
+    if not os.path.exists(noiseout):
+            os.mkdir(noiseout)
     else:
-        print("Warning: dir {} already exists".format(noisename))
+        print("Warning: dir {} already exists".format(noiseout))
 
-    noisefiles = [os.path.join(noisename, f) for f in os.listdir(noisename) if f.endswith('.jpg')]
-    print("Copying noise samples to {} ...".format(noisename))
+    noisefiles = [os.path.join(r,f) for r,d,file in os.walk(noisename) for f in file]
+    print("Copying noise samples to {} ...".format(noiseout))
     for noisefile in tqdm(noisefiles):
-        cp(noisefile, noisefiles)
+        spepath = os.path.join(noiseout,noisefile.split("/")[-2])
+        if not os.path.exists(spepath):
+                os.mkdir(spepath)
+        cp(noisefile, spepath)
 
     print("Done building dataset")
