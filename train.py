@@ -196,9 +196,27 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model and optimizer
-    model = net.DenseNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
-    ## optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
-    optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
+    if params.model == 1:
+        print('-Training using DenseNet')
+        model = net.DenseNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
+        
+        if params.optimizer == 1:
+            print('--optimizer is Adam'); print()
+            optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
+        elif params.optimizer == 2:
+            print('--optimizer is SGD'); print()
+            optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
+
+    elif params.model == 2:
+        print('-Training using SqueezeNet')
+        model = net.SqueezeNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
+
+        if params.optimizer == 1:
+            print('--optimizer is Adam'); print()
+            optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
+        elif params.optimizer == 2:
+            print('--optimizer is SGD'); print()
+            optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
 
     # fetch loss function and metrics
     loss_fn = net.loss_fn

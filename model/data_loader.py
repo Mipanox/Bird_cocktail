@@ -158,7 +158,7 @@ class BirdFolder(ImageFolder):
             ## rescaling to [0,255]
             img_res_ar -=  img_res_ar.min()
             if img_res_ar.max() == 0:
-                img_res_ar = 0.
+                img_res_ar = np.zeros(img_res_ar.shape) + 1e-5
             else:
                 img_res_ar /= (img_res_ar.max() / 255.)
             

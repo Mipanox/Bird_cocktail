@@ -19,10 +19,10 @@ import torchvision.models as models
 import sys
 import math
 
+# DenseNet
 
 ######################
 ## Helper functions ##
-
 class Bottleneck(nn.Module):
     def __init__(self, nChannels, growthRate):
         super(Bottleneck, self).__init__()
@@ -67,7 +67,6 @@ class Transition(nn.Module):
 
 #############################
 ## Main Network Definition ##
-
 class DenseNetBase(nn.Module):
     """
     Documentation for reference: http://pytorch.org/docs/master/nn.html
@@ -140,7 +139,7 @@ class DenseNetBase(nn.Module):
             s: (Variable) contains a batch of images, of dimension batch_size x 1 x 128 x 192
 
         Returns:
-            out: (Variable) dimension batch_size x num_classes with the log prob for the labels
+            out: (Variable) dimension batch_size x num_classes
         """       
         out = self.conv1(s)
         out = self.trans1(self.dense1(out))
@@ -150,7 +149,71 @@ class DenseNetBase(nn.Module):
         out = out.view(out.size()[0], -1)
         return self.fc(out)
 
+# SqueezeNet
 
+#############################
+## Main Network Definition ##
+class SqueezeNetBase(nn.Module):
+    """
+    Modified from official Version 1.1: 
+     - https://github.com/DeepScale/SqueezeNet/tree/master/SqueezeNet_v1.1
+    Documentation for reference: http://pytorch.org/docs/master/nn.html
+    """
+    def __init__(self, params, num_classes):
+        """
+        Args:
+            params: (Params) contains dropout
+        """
+        self.num_classes = num_classes
+        self.dropoutrate = params.dropout
+        
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=3, stride=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True),
+            Fire(64, 16, 64, 64),
+            Fire(128, 16, 64, 64),
+            nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True),
+            Fire(128, 32, 128, 128),
+            Fire(256, 32, 128, 128),
+            nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True),
+            Fire(256, 48, 192, 192),
+            Fire(384, 48, 192, 192),
+            Fire(384, 64, 256, 256),
+            Fire(512, 64, 256, 256),
+        )
+        # Final convolution is initialized differently form the rest
+        final_conv = nn.Conv2d(512, self.num_classes, kernel_size=1)
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=self.dropoutrate),
+            final_conv,
+            nn.ReLU(inplace=True),
+            nn.AvgPool2d(13)
+        )
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                if m is final_conv:
+                    init.normal(m.weight.data, mean=0.0, std=0.01)
+                else:
+                    init.kaiming_uniform(m.weight.data)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+
+    def forward(self, s):
+        """
+        Args:
+            s: (Variable) contains a batch of images, of dimension batch_size x 1 x 128 x 192
+
+        Returns:
+            out: (Variable) dimension batch_size x num_classes with the log prob for the labels
+        """ 
+        s = self.features(s)
+        s = self.classifier(s)
+        return s.view(s.size(0), self.num_classes)
+
+
+#---------------------------------------------------------------------
 def loss_fn():
     """
     Multi-label loss function
