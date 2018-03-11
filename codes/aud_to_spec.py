@@ -19,7 +19,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--src_dir"  , dest="src_dir")
 parser.add_option("--spec_dir" , dest="spec_dir")
-parser.add_option("--threshold", dest="threshold", default=14., type="float")
+parser.add_option("--threshold", dest="threshold", default=24., type="float")
 (options, args) = parser.parse_args()
 
 ## paths
@@ -98,7 +98,7 @@ def getMultiSpec(path, seconds=3., overlap=2.5, minlen=3., **kwargs):
     return magspec_
 
 
-def hasBird(spec, raw_thresh=10., threshold=threshold):
+def hasBird(spec, raw_thresh=10., threshold=14.):
     """
     Decide if given spectrum shows bird sounds or noise only
     
@@ -179,7 +179,8 @@ if __name__ == "__main__":
                     isbird, thresh = hasBird(spec)
                     
                     ## new target path -> rejected specs will be copied to "noise" folder
-                    if isbird:
+                    #                     and only high-thresh specs can be saved
+                    if isbird and thresh > threshold:
                         dst_dir = spec_dir + bird.split("/")[-2].replace('%27','') + "/"
                     else:
                         dst_dir = spec_dir + "noise/" + bird.split("/")[-2].replace('%27','') + "/"
