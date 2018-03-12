@@ -145,7 +145,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         logging.info("Restoring parameters from {}".format(restore_path))
         utils.load_checkpoint(restore_path, model, optimizer)
 
-    best_val_acc = 0.0
+    best_val_met = 0.0
 
     for epoch in range(params.num_epochs):
         # Run one epoch
@@ -157,8 +157,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params, args.num_classes, epoch)
 
-        val_acc = val_metrics['accuracy']
-        is_best = val_acc>=best_val_acc
+        val_acc = val_metrics['f1']
+        is_best = val_acc>=best_val_met
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
@@ -170,7 +170,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # If best_eval, best_save_path
         if is_best:
             logging.info("- Found new best accuracy")
-            best_val_acc = val_acc
+            best_val_met = val_acc
 
             # Save best val metrics in a json file in the model directory
             best_json_path = os.path.join(model_dir, "metrics_val_best_weights.json")
@@ -213,34 +213,23 @@ if __name__ == '__main__':
     if params.model == 1:
         print('  -- Training using DenseNet')
         model = net.DenseNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
-        
-        ## tensorboar logging
-        dummy_input = Variable(torch.rand(params.batch_size,1,128,params.width).cuda(async=True) if params.cuda else \
-                               torch.rand(params.batch_size,1,128,params.width))
-        writer.add_graph(model, (dummy_input, ))
-
-        if params.optimizer == 1:
-            print('  ---optimizer is Adam'); print('')
-            optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
-        elif params.optimizer == 2:
-            print('  ---optimizer is SGD'); print('')
-            optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
 
     elif params.model == 2:
         print('  -- Training using SqueezeNet')
-        model = net.SqueezeNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
+        model = net.SqueezeNetBase(params,args.num_classes).cuda() if params.cuda else net.SqueezeNetBase(params,args.num_classes)
 
-        ## tensorboar logging
-        dummy_input = Variable(torch.rand(params.batch_size,1,128,params.width).cuda(async=True) if params.cuda else \
-                               torch.rand(params.batch_size,1,128,params.width))
-        writer.add_graph(model, (dummy_input, ))
+    # optimizer
+    if params.optimizer == 1:
+        print('  ---optimizer is Adam'); print('')
+        optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
+    elif params.optimizer == 2:
+        print('  ---optimizer is SGD'); print('')
+        optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
 
-        if params.optimizer == 1:
-            print('  ---optimizer is Adam'); print('')
-            optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
-        elif params.optimizer == 2:
-            print('  ---optimizer is SGD'); print('')
-            optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
+    ## tensorboar logging
+    dummy_input = Variable(torch.rand(params.batch_size,1,128,params.width).cuda(async=True) if params.cuda else \
+                           torch.rand(params.batch_size,1,128,params.width))
+    writer.add_graph(model, (dummy_input, ))
 
     # fetch loss function and metrics
     loss_fn = net.loss_fn

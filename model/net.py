@@ -152,6 +152,32 @@ class DenseNetBase(nn.Module):
         return self.fc(out)
 
 # SqueezeNet
+import torch.nn.init as init
+from torchvision.models.squeezenet import *
+
+######################
+## Helper functions ##
+class Fire(nn.Module):
+
+    def __init__(self, inplanes, squeeze_planes,
+                 expand1x1_planes, expand3x3_planes):
+        super(Fire, self).__init__()
+        self.inplanes = inplanes
+        self.squeeze = nn.Conv2d(inplanes, squeeze_planes, kernel_size=1)
+        self.squeeze_activation = nn.ReLU(inplace=True)
+        self.expand1x1 = nn.Conv2d(squeeze_planes, expand1x1_planes,
+                                   kernel_size=1)
+        self.expand1x1_activation = nn.ReLU(inplace=True)
+        self.expand3x3 = nn.Conv2d(squeeze_planes, expand3x3_planes,
+                                   kernel_size=3, padding=1)
+        self.expand3x3_activation = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        x = self.squeeze_activation(self.squeeze(x))
+        return torch.cat([
+            self.expand1x1_activation(self.expand1x1(x)),
+            self.expand3x3_activation(self.expand3x3(x))
+        ], 1)
 
 #############################
 ## Main Network Definition ##
@@ -166,6 +192,8 @@ class SqueezeNetBase(nn.Module):
         Args:
             params: (Params) contains dropout
         """
+        super(SqueezeNetBase, self).__init__()
+
         self.num_classes = num_classes
         self.dropoutrate = params.dropout
         
@@ -190,7 +218,7 @@ class SqueezeNetBase(nn.Module):
             nn.Dropout(p=self.dropoutrate),
             final_conv,
             nn.ReLU(inplace=True),
-            nn.AvgPool2d(13)
+            nn.AvgPool2d(6)
         )
 
         for m in self.modules():
@@ -229,7 +257,6 @@ def accuracy(outputs, labels):
     Compute the accuracy given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
-    outputs = np.greater(outputs,0.5)*1
     acc = np.mean([met.accuracy_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return acc
 
@@ -238,7 +265,6 @@ def precision(outputs, labels):
     Compute the precision given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
-    outputs = np.greater(outputs,0.5)*1
     prec = np.mean([met.precision_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return prec
 
@@ -247,8 +273,15 @@ def recall(outputs, labels):
     Compute the recall given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
-    outputs = np.greater(outputs,0.5)*1
     rec = np.mean([met.recall_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
+    return rec
+
+def f1(outputs, labels):
+    """
+    Compute the F1 (harmonic mean of precision and recall) given the outputs and labels for all images.
+    Returns: (float) accuracy in [0,1]
+    """
+    rec = np.mean([met.f1_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return rec
 
 ## metrics
@@ -256,4 +289,5 @@ metrics = {
     'accuracy' : accuracy,
     'precision': precision,
     'recall'   : recall,
+    'f1'       : f1,
 }
