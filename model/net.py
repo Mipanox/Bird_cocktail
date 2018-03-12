@@ -2,8 +2,10 @@
  Defines the neural network, losss function and metrics
  - Largely inherited from Stanford CS230 example code:
    https://github.com/cs230-stanford/cs230-code-examples/tree/master/pytorch/vision
- - Largely borrowed from andreaazzini's repository:
+ - Partly borrowed from andreaazzini's repository:
    https://github.com/andreaazzini/multidensenet
+ - Partly borrowed from official PyTorch model source code:
+   https://github.com/DeepScale/SqueezeNet/tree/master/SqueezeNet_v1.1
 
 """
 
@@ -136,11 +138,11 @@ class DenseNetBase(nn.Module):
     def forward(self, s):
         """
         Args:
-            s: (Variable) contains a batch of images, of dimension batch_size x 1 x 128 x 192
+            s: (Variable) contains a batch of images, of dimension batch_size x 1 x 128 x params.width
 
         Returns:
             out: (Variable) dimension batch_size x num_classes
-        """       
+        """
         out = self.conv1(s)
         out = self.trans1(self.dense1(out))
         out = self.trans2(self.dense2(out))

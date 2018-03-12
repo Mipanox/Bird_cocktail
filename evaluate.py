@@ -11,10 +11,13 @@ import os
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.autograd import Variable
 import utils
 import model.net as net
 import model.data_loader as data_loader
+
+from tensorboardX import SummaryWriter
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir'    , default='datasets/spec_split'   , help="Directory containing the splitted dataset")
@@ -22,8 +25,9 @@ parser.add_argument('--model_dir'   , default='experiments/base_model', help="Di
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
 
+writer = SummaryWriter('tensorboardlogs/vallog')
 
-def evaluate(model, loss_fn, dataloader, metrics, params, num_classes):
+def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch):
     """Evaluate the model on `num_steps` batches.
 
     Args:
@@ -42,8 +46,7 @@ def evaluate(model, loss_fn, dataloader, metrics, params, num_classes):
     summ = []
 
     # compute metrics over the dataset
-    for data_batch, labels_batch in dataloader:
-
+    for i, (data_batch, labels_batch) in enumerate(dataloader):
         # move to GPU if available
         if params.cuda:
             data_batch, labels_batch = data_batch.cuda(async=True), labels_batch.cuda(async=True)
@@ -56,7 +59,7 @@ def evaluate(model, loss_fn, dataloader, metrics, params, num_classes):
         loss = ls(output_batch.float(), labels_batch.float())
 
         # extract data from torch Variable, move to cpu, convert to numpy arrays
-        output_batch = output_batch.data.cpu().numpy()
+        output_batch = F.sigmoid(output_batch).data.gt(params.threshold).cpu().numpy()
         labels_batch = labels_batch.data.cpu().numpy()
 
         # compute all metrics on this batch
@@ -65,10 +68,17 @@ def evaluate(model, loss_fn, dataloader, metrics, params, num_classes):
         summary_batch['loss'] = loss.data[0]
         summ.append(summary_batch)
 
+        if i % params.save_summary_steps == 0:
+            ## tensorboard logging
+            niter = epoch*len(dataloader)+i
+            for tag, value in summary_batch.items():
+                writer.add_scalar(tag, value, niter)
+
     # compute mean of all metrics in summary
     metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]} 
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v) for k, v in metrics_mean.items())
     logging.info("- Eval metrics : " + metrics_string)
+
     return metrics_mean
 
 
@@ -102,7 +112,10 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model
-    model = net.DenseNetBase(params,num_classes).cuda() if params.cuda else net.DenseNetBase(params,num_classes)
+    if params.model == 1:
+        model = net.DenseNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
+    elif params.model == 2:
+        model = net.SqueezeNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
     
     loss_fn = net.loss_fn
     metrics = net.metrics

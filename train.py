@@ -21,6 +21,8 @@ import model.net as net
 import model.data_loader as data_loader
 from evaluate import evaluate
 
+from tensorboardX import SummaryWriter
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir'    , default='datasets/spec_split'   , help="Directory containing the splitted dataset")
 parser.add_argument('--model_dir'   , default='experiments/base_model', help="Directory containing params.json")
@@ -28,8 +30,9 @@ parser.add_argument('--num_classes' , default=300, type=int, help="Numer of clas
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before training")
 
+writer = SummaryWriter('trainlog')
 
-def train(model, optimizer, loss_fn, dataloader, metrics, params):
+def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
     """Train the model on `num_steps batches
 
     Args:
@@ -80,7 +83,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
             # Evaluate summaries only once in a while
             if i % params.save_summary_steps == 0:
                 # extract data from torch Variable, move to cpu, convert to numpy arrays
-                output_batch = F.sigmoid(output_batch).data.cpu().numpy()
+                output_batch = F.sigmoid(output_batch).data.gt(params.threshold).cpu().numpy()
                 labels_batch = labels_batch.data.cpu().numpy()
                 
                 # compute all metrics on this batch
@@ -88,6 +91,17 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
                                  for metric in metrics}
                 summary_batch['loss'] = loss.data[0]
                 summ.append(summary_batch)
+
+                ## tensorboard logging
+                niter = epoch*len(dataloader)+i
+                for tag, value in summary_batch.items():
+                    writer.add_scalar(tag, value, niter)
+
+                #-- Log values and gradients of the parameters (histogram)
+                for name, param in model.named_parameters():
+                    name = name.replace('.', '/')
+                    writer.add_histogram(name, param.clone().cpu().data.numpy(), niter)
+                    writer.add_histogram(name+'/grad', param.grad.clone().cpu().data.numpy(), niter)                
 
             # update the average loss
             loss_avg.update(loss.data[0])
@@ -138,10 +152,10 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         logging.info("Epoch {}/{}".format(epoch + 1, params.num_epochs))
 
         # compute number of batches in one epoch (one full pass over the training set)
-        train(model, optimizer, loss_fn, train_dataloader, metrics, params)
+        train(model, optimizer, loss_fn, train_dataloader, metrics, params, epoch)
 
         # Evaluate for one epoch on validation set
-        val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params, args.num_classes)
+        val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params, args.num_classes, epoch)
 
         val_acc = val_metrics['accuracy']
         is_best = val_acc>=best_val_acc
@@ -197,25 +211,33 @@ if __name__ == '__main__':
 
     # Define the model and optimizer
     if params.model == 1:
-        print('-Training using DenseNet')
+        print('  -- Training using DenseNet')
         model = net.DenseNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
         
+        ## tensorboar logging
+        dummy_input = Variable(torch.rand(params.batch_size, 1, 128, params.width))
+        writer.add_graph(model, (dummy_input, ))
+
         if params.optimizer == 1:
-            print('--optimizer is Adam'); print()
+            print('  ---optimizer is Adam'); print('')
             optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
         elif params.optimizer == 2:
-            print('--optimizer is SGD'); print()
+            print('  ---optimizer is SGD'); print('')
             optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
 
     elif params.model == 2:
-        print('-Training using SqueezeNet')
+        print('  -- Training using SqueezeNet')
         model = net.SqueezeNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
 
+        ## tensorboar logging
+        dummy_input = Variable(torch.rand(params.batch_size, 1, params.width, 192))
+        writer.add_graph(model, (dummy_input, ))
+
         if params.optimizer == 1:
-            print('--optimizer is Adam'); print()
+            print('  ---optimizer is Adam'); print('')
             optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
         elif params.optimizer == 2:
-            print('--optimizer is SGD'); print()
+            print('  ---optimizer is SGD'); print('')
             optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
 
     # fetch loss function and metrics
@@ -226,3 +248,6 @@ if __name__ == '__main__':
     logging.info("Starting training for {} epoch(s)".format(params.num_epochs))
     train_and_evaluate(model, train_dl, val_dl, optimizer, loss_fn, metrics, params, args.model_dir,
                        args.restore_file)
+
+    writer.export_scalars_to_json("./all_scalars.json")
+    writer.close()
