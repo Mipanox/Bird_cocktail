@@ -217,17 +217,20 @@ def fetch_dataloader(types, data_dir, params, **kwargs):
 
             # use the train_transformer if training data, else use eval_transformer without random flip
             if split == 'train':
-                dl = DataLoader(BirdFolder(path, noise_path, train_transformer, **kwargs),
+                dl = DataLoader(BirdFolder(path, noise_path, train_transformer, 
+                                aug_factor=params.aug_factor, **kwargs),
                                 batch_size=params.batch_size, shuffle=True,
                                 num_workers=params.num_workers,
                                 pin_memory=params.cuda)
             elif split == 'val':
-                dl = DataLoader(BirdFolder(path, noise_path, eval_transformer, **kwargs), 
+                dl = DataLoader(BirdFolder(path, noise_path, eval_transformer, 
+                                aug_factor=params.aug_factor, **kwargs), 
                                 batch_size=params.batch_size, shuffle=False,
                                 num_workers=params.num_workers,
                                 pin_memory=params.cuda)
             else: # test
-                dl = DataLoader(BirdFolder(path, noise_path, test_transformer, **kwargs), 
+                dl = DataLoader(BirdFolder(path, noise_path, test_transformer, 
+                                aug_factor=params.aug_factor, **kwargs), 
                                 batch_size=params.batch_size, shuffle=False,
                                 num_workers=params.num_workers,
                                 pin_memory=params.cuda)
