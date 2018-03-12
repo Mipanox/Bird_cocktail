@@ -8,6 +8,7 @@
     "num_workers": 4,
     "dropout": 0.5,
     "optimizer": 2,
+    "threshold": 0.5,
 
 
     "growthRate": 12, 

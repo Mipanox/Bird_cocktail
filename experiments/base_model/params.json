@@ -9,6 +9,8 @@
     "growthRate": 12, 
     "depth": 20, 
     "reduction": 0.5,
+    "optimizer": 2,
+    "threshold": 0.5,
 
 
     "dropout": 0.5

@@ -30,7 +30,7 @@ parser.add_argument('--num_classes' , default=300, type=int, help="Numer of clas
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before training")
 
-writer = SummaryWriter('trainlog')
+writer = SummaryWriter('tensorboardlogs/trainlog')
 
 def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
     """Train the model on `num_steps batches
