@@ -215,7 +215,8 @@ if __name__ == '__main__':
         model = net.DenseNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
         
         ## tensorboar logging
-        dummy_input = Variable(torch.rand(params.batch_size, 1, 128, params.width))
+        dummy_input = Variable(torch.rand(params.batch_size,1,128,params.width).cuda(async=True) if params.cuda else \
+                               torch.rand(params.batch_size,1,128,params.width))
         writer.add_graph(model, (dummy_input, ))
 
         if params.optimizer == 1:
@@ -230,7 +231,8 @@ if __name__ == '__main__':
         model = net.SqueezeNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
 
         ## tensorboar logging
-        dummy_input = Variable(torch.rand(params.batch_size, 1, params.width, 192))
+        dummy_input = Variable(torch.rand(params.batch_size,1,128,params.width).cuda(async=True) if params.cuda else \
+                               torch.rand(params.batch_size,1,128,params.width))
         writer.add_graph(model, (dummy_input, ))
 
         if params.optimizer == 1:

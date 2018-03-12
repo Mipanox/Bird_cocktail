@@ -2,7 +2,7 @@
  Utility functions
  - Mostly inherited from Stanford CS230 example code:
    https://github.com/cs230-stanford/cs230-code-examples/tree/master/pytorch/vision
-
+   
 """
 
 import json
