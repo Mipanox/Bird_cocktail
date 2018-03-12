@@ -1,0 +1,13 @@
+numpy
+scipy
+librosa
+opencv-python
+torch>0.3
+torchvision
+Pillow
+tabulate
+tqdm
+sklearn
+tensorflow
+tensorboard
+tensorboardX
