@@ -129,7 +129,7 @@ class BirdFolder(ImageFolder):
         ## initialize superposed img array as the noise
         np.random.seed(index) # use index as random seed to ensure reproducibility
 
-        path  = self.noise_imgs[np.random.randint(0,tot_len/self.aug_factor)]
+        path  = self.noise_imgs[np.random.randint(0,tot_len/self.aug_factor) % len(self.noise_imgs)]
         noise = self.loader(path)
         if self.transform is not None:          
             noise = self.transform(noise)
