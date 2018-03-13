@@ -118,6 +118,8 @@ if __name__ == '__main__':
         model = net.SqueezeNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
     elif params.model == 3:
         model = net.InceptionBase(params,args.num_classes).cuda() if params.cuda else net.InceptionBase(params,args.num_classes)
+    elif params.model == 4:
+        model = net.InceptionResnetBase(params,args.num_classes).cuda() if params.cuda else net.InceptionResnetBase(params,args.num_classes)
 
     loss_fn = net.loss_fn
     metrics = net.metrics

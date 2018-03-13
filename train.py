@@ -231,6 +231,11 @@ if __name__ == '__main__':
         print('  -- Training using Inception')
         model = net.InceptionBase(params,args.num_classes).cuda() if params.cuda else net.InceptionBase(params,args.num_classes)
 
+    elif params.model == 4:
+        print('  -- Training using InceptionResNet')
+        model = net.InceptionResnetBase(params,args.num_classes).cuda() if params.cuda else net.InceptionResnetBase(params,args.num_classes)
+
+
     # optimizer
     if params.optimizer == 1:
         print('  ---optimizer is Adam'); print('')
