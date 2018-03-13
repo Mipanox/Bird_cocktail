@@ -12,6 +12,7 @@ import os
 import numpy as np
 import torch
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR
 from torch.autograd import Variable
 import torch.nn.functional as F
 from tqdm import tqdm
@@ -147,9 +148,17 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
     best_val_met = 0.0
 
+    scheduler = None
+    if hasattr(params,'lr_decay_gamma'):
+        scheduler = StepLR(optimizer, step_size=params.lr_decay_step, gamma=params.lr_decay_gamma)
+
     for epoch in range(params.num_epochs):
         # Run one epoch
         logging.info("Epoch {}/{}".format(epoch + 1, params.num_epochs))
+
+        ##
+        if scheduler is not None:
+            scheduler.step()
 
         # compute number of batches in one epoch (one full pass over the training set)
         train(model, optimizer, loss_fn, train_dataloader, metrics, params, epoch)
@@ -217,6 +226,10 @@ if __name__ == '__main__':
     elif params.model == 2:
         print('  -- Training using SqueezeNet')
         model = net.SqueezeNetBase(params,args.num_classes).cuda() if params.cuda else net.SqueezeNetBase(params,args.num_classes)
+
+    elif params.model == 3:
+        print('  -- Training using Inception')
+        model = net.InceptionBase(params,args.num_classes).cuda() if params.cuda else net.InceptionBase(params,args.num_classes)
 
     # optimizer
     if params.optimizer == 1:
