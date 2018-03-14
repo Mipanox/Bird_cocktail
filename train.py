@@ -66,13 +66,13 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
             # move to GPU if available
             if params.cuda:
                 train_batch, labels_batch = train_batch.cuda(async=True), labels_batch.cuda(async=True)
+
             # convert to torch Variables
             train_batch, labels_batch = Variable(train_batch), Variable(labels_batch)
 
             # compute model output and loss
             output_batch = model(train_batch)
-            ls   = loss_fn()
-            loss = ls(output_batch.float(), labels_batch.float())
+            loss = loss_fn(output_batch.float(), labels_batch.float())
 
             # clear previous gradients, compute gradients of all variables wrt loss
             optimizer.zero_grad()
@@ -83,12 +83,8 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
 
             # Evaluate summaries only once in a while
             if i % params.save_summary_steps == 0:
-                # extract data from torch Variable, move to cpu, convert to numpy arrays
-                output_batch = F.sigmoid(output_batch).data.gt(params.threshold).cpu().numpy()
-                labels_batch = labels_batch.data.cpu().numpy()
-                
                 # compute all metrics on this batch
-                summary_batch = {metric:metrics[metric](output_batch, labels_batch)
+                summary_batch = {metric:metrics[metric](output_batch, labels_batch, params.threshold)
                                  for metric in metrics}
                 summary_batch['loss'] = loss.data[0]
                 summ.append(summary_batch)
@@ -166,8 +162,13 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params, args.num_classes, epoch)
 
-        val_acc = val_metrics['f1']
-        is_best = val_acc>=best_val_met
+        if hasattr(params,'if_single'): 
+            if params.if_single == 1: # single-label
+                val_acc = val_metrics['accuracy']
+        else:
+            val_acc = val_metrics['f1']
+
+        is_best = val_acc >= best_val_met
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
@@ -212,7 +213,11 @@ if __name__ == '__main__':
     logging.info("Loading the datasets...")
 
     # fetch dataloaders
-    dataloaders = data_loader.fetch_dataloader(['train', 'val'], args.data_dir, params)
+    if hasattr(params,'if_single'): 
+        if params.if_single == 1: # single-label
+            dataloaders = data_loader.fetch_dataloader(['train', 'val'], args.data_dir, params, mixing=False)
+    else:
+        dataloaders = data_loader.fetch_dataloader(['train', 'val'], args.data_dir, params, mixing=True)
     train_dl = dataloaders['train']
     val_dl   = dataloaders['val']
 
@@ -250,8 +255,13 @@ if __name__ == '__main__':
     writer.add_graph(model, (dummy_input, ))
 
     # fetch loss function and metrics
-    loss_fn = net.loss_fn
-    metrics = net.metrics
+    if hasattr(params,'if_single'): 
+        if params.if_single == 1: # single-label
+            loss_fn = net.loss_fn_sing
+            metrics = net.metrics_sing
+    else:
+        loss_fn = net.loss_fn
+        metrics = net.metrics
 
     # Train the model
     logging.info("Starting training for {} epoch(s)".format(params.num_epochs))

@@ -652,17 +652,17 @@ class InceptionResnetBase(nn.Module):
             Block17(scale=0.10),
             Block17(scale=0.10),
             Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
-            Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
+            #Block17(scale=0.10),
             Block17(scale=0.10)
         )
         self.mixed_7a = Mixed_7a()
@@ -803,44 +803,51 @@ class SqueezeNetBase(nn.Module):
         return s.view(s.size(0), self.num_classes)
 
 
-#---------------------------------------------------------------------
-def loss_fn():
+#--------------------------------Multi-label-------------------------------------
+def loss_fn(outputs, labels):
     """
     Multi-label loss function
      sigmoid + binary cross entropy loss for better numerical stability
     """
-    return nn.BCEWithLogitsLoss()
+    return nn.BCEWithLogitsLoss()(outputs, labels)
 
-
-def accuracy(outputs, labels):
+def accuracy(outputs, labels, threshold):
     """
     Compute the accuracy given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
+    outputs = F.sigmoid(outputs).data.gt(threshold).cpu().numpy()
+    labels  = labels.data.cpu().numpy()
     acc = np.mean([met.accuracy_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return acc
 
-def precision(outputs, labels):
+def precision(outputs, labels, threshold):
     """
     Compute the precision given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
+    outputs = F.sigmoid(outputs).data.gt(threshold).cpu().numpy()
+    labels  = labels.data.cpu().numpy()
     prec = np.mean([met.precision_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return prec
 
-def recall(outputs, labels):
+def recall(outputs, labels, threshold):
     """
     Compute the recall given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
+    outputs = F.sigmoid(outputs).data.gt(threshold).cpu().numpy()
+    labels  = labels.data.cpu().numpy()
     rec = np.mean([met.recall_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return rec
 
-def f1(outputs, labels):
+def f1(outputs, labels, threshold):
     """
     Compute the F1 (harmonic mean of precision and recall) given the outputs and labels for all images.
     Returns: (float) accuracy in [0,1]
     """
+    outputs = F.sigmoid(outputs).data.gt(threshold).cpu().numpy()
+    labels  = labels.data.cpu().numpy()
     rec = np.mean([met.f1_score(labels[i], outputs[i]) for i in range(labels.shape[0])])
     return rec
 
@@ -850,4 +857,27 @@ metrics = {
     'precision': precision,
     'recall'   : recall,
     'f1'       : f1,
+}
+
+#--------------------------------Single-label-------------------------------------
+def loss_fn_sing(outputs, labels):
+    """
+    Single-label loss function
+     (log) softmax + binary cross entropy loss for better numerical stability
+    """
+    return nn.CrossEntropyLoss()(outputs, labels.long())
+
+def accuracy_sing(outputs, labels, threshold):
+    """
+    Compute the accuracy given the outputs and labels for all images.
+    Returns: (float) accuracy in [0,1]
+    """
+    outputs = np.argmax(F.softmax(outputs, dim=1).data.cpu().numpy(), axis=1)
+    labels  = labels.data.cpu().numpy() # LongTensor not one-hot
+    acc = np.sum(outputs==labels)/float(labels.size)
+    return acc
+
+## metrics
+metrics_sing = {
+    'accuracy' : accuracy_sing,
 }

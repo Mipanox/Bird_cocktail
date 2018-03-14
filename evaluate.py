@@ -55,15 +55,10 @@ def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch):
         
         # compute model output
         output_batch = model(data_batch)
-        ls   = loss_fn()
-        loss = ls(output_batch.float(), labels_batch.float())
-
-        # extract data from torch Variable, move to cpu, convert to numpy arrays
-        output_batch = F.sigmoid(output_batch).data.gt(params.threshold).cpu().numpy()
-        labels_batch = labels_batch.data.cpu().numpy()
+        loss = loss_fn(output_batch.float(), labels_batch.float())
 
         # compute all metrics on this batch
-        summary_batch = {metric: metrics[metric](output_batch, labels_batch)
+        summary_batch = {metric: metrics[metric](output_batch, labels_batch, params.threshold)
                          for metric in metrics}
         summary_batch['loss'] = loss.data[0]
         summ.append(summary_batch)

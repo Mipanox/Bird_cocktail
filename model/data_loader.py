@@ -161,7 +161,10 @@ class BirdFolder(ImageFolder):
                 img_res_ar = np.zeros(img_res_ar.shape) + 1e-5
             else:
                 img_res_ar /= (img_res_ar.max() / 255.)
-            
+
+            ## convert to multi-hot vector
+            tar_res_lt = code_to_vec(sorted(set(tar_res_lt)),self.classes)
+
         else:
             path, target = self.imgs[index]
             img = self.loader(path)
@@ -169,11 +172,12 @@ class BirdFolder(ImageFolder):
                 img = self.transform(img)
                 
             img_res_ar += np.array(img)
-            tar_res_lt.append(target)
+
+            ## as class values [0, num_classes - 1]
+            tar_res_lt = target
             
         img = transforms.ToTensor().__call__(img_res_ar.transpose(1,2,0)) # back to [0,1]
-        tar_res_lt = code_to_vec(sorted(set(tar_res_lt)),self.classes)
-        
+
         return img, tar_res_lt
 
 #################
