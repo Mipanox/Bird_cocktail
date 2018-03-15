@@ -95,10 +95,10 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
                     writer.add_scalar(tag, value, niter)
 
                 #-- Log values and gradients of the parameters (histogram)
-                for name, param in model.named_parameters():
-                    name = name.replace('.', '/')
-                    writer.add_histogram(name, param.clone().cpu().data.numpy(), niter)
-                    writer.add_histogram(name+'/grad', param.grad.clone().cpu().data.numpy(), niter)                
+                # for name, param in model.named_parameters():
+                #     name = name.replace('.', '/')
+                #     writer.add_histogram(name, param.clone().cpu().data.numpy(), niter)
+                #     writer.add_histogram(name+'/grad', param.grad.clone().cpu().data.numpy(), niter)                
 
             # update the average loss
             loss_avg.update(loss.data[0])
@@ -218,6 +218,7 @@ if __name__ == '__main__':
             dataloaders = data_loader.fetch_dataloader(['train', 'val'], args.data_dir, params, mixing=False)
     else:
         dataloaders = data_loader.fetch_dataloader(['train', 'val'], args.data_dir, params, mixing=True)
+        
     train_dl = dataloaders['train']
     val_dl   = dataloaders['val']
 
@@ -240,14 +241,21 @@ if __name__ == '__main__':
         print('  -- Training using InceptionResNet')
         model = net.InceptionResnetBase(params,args.num_classes).cuda() if params.cuda else net.InceptionResnetBase(params,args.num_classes)
 
+    elif params.model == 5:
+        print('  -- Training using ResNet')
+        model = net.ResNet18(params,args.num_classes).cuda() if params.cuda else net.ResNet18(params,args.num_classes)
 
     # optimizer
     if params.optimizer == 1:
         print('  ---optimizer is Adam'); print('')
         optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
+        if hasattr(params,'lambd'):
+            optimizer = optim.Adam(model.parameters(), lr=params.learning_rate, weight_decay=params.lambd)
     elif params.optimizer == 2:
         print('  ---optimizer is SGD'); print('')
-        optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=1e-4)
+        optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=params.learning_rate)
+        if hasattr(params,'lambd'):
+            optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=params.lambd)
 
     ## tensorboar logging
     dummy_input = Variable(torch.rand(params.batch_size,1,128,params.width).cuda(async=True) if params.cuda else \

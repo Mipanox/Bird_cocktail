@@ -115,6 +115,9 @@ if __name__ == '__main__':
         model = net.InceptionBase(params,args.num_classes).cuda() if params.cuda else net.InceptionBase(params,args.num_classes)
     elif params.model == 4:
         model = net.InceptionResnetBase(params,args.num_classes).cuda() if params.cuda else net.InceptionResnetBase(params,args.num_classes)
+    elif params.model == 5:
+        model = net.ResNet18(params,args.num_classes).cuda() if params.cuda else net.ResNet18(params,args.num_classes)
+
 
     loss_fn = net.loss_fn
     metrics = net.metrics
