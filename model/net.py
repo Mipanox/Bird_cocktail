@@ -851,11 +851,11 @@ class ResNet18(nn.Module):
         self.conv1 = nn.Conv2d(1,self.inchannels, 3, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(self.inchannels)
         self.maxpool = nn.MaxPool2d(kernel_size=3,stride=2,padding=1)
-        self.layer1 = self._make_layer(Block,self.num_channels,layers[0], stride=2)
+        self.layer1 = self._make_layer(Block,  self.num_channels,layers[0], stride=2)
         self.layer2 = self._make_layer(Block,2*self.num_channels,layers[1], stride=2)
         self.layer3 = self._make_layer(Block,4*self.num_channels,layers[2], stride=2)
         self.avgpool = nn.AvgPool2d(4,stride=1)
-        self.fc1 = nn.Linear(1024, num_classes)
+        self.fc1 = nn.Linear(2*128*int(np.ceil(params.width/128.))*2, num_classes)
 
         self._initialize_weights()
 

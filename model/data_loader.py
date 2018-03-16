@@ -112,8 +112,9 @@ class BirdFolder(ImageFolder):
         assert isinstance(self.aug_factor, int), "aug_factor must be an integer"
         assert isinstance(self.num_mix, int), "num_mix must be an integer"
         if not self.mixing and (self.aug_factor > 1):            
-            raise ValueError('No mixing is mutually exclusive with aug_factor > 1')
-            
+            print('CAUTION: Augmentation with no-mxing should be done with proper random cropping')
+            print('         i.e. cropped size must be smaller than original size')
+        
     def __len__(self):
         return len(self.imgs) * self.aug_factor
         
@@ -129,9 +130,9 @@ class BirdFolder(ImageFolder):
         ## initialize superposed img array as the noise
         np.random.seed(index) # use index as random seed to ensure reproducibility
 
-        path  = self.noise_imgs[np.random.randint(0,tot_len/self.aug_factor) % len(self.noise_imgs)]
+        path  = self.noise_imgs[np.random.randint(0,tot_len) % len(self.noise_imgs)]
         noise = self.loader(path)
-        if self.transform is not None:          
+        if self.transform is not None:
             noise = self.transform(noise)
         
         img_res_ar = np.array(noise) * 0.1  # not too strong        
@@ -166,7 +167,7 @@ class BirdFolder(ImageFolder):
             tar_res_lt = code_to_vec(sorted(set(tar_res_lt)),self.classes)
 
         else:
-            path, target = self.imgs[index]
+            path, target = self.imgs[index%len(self.imgs)]
             img = self.loader(path)
             if self.transform is not None:
                 img = self.transform(img)
