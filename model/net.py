@@ -910,7 +910,6 @@ def loss_fn(outputs, labels):
 
 ## WARP loss
 #-- Weighted Approximate-Rank Pairwise loss
-import sys; sys.path.append('../codes/')
 from utils import WARP, WARPLoss
 
 def loss_warp(outputs, labels):
