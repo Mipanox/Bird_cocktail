@@ -2,7 +2,7 @@
  Utility functions
  - Mostly inherited from Stanford CS230 example code:
    https://github.com/cs230-stanford/cs230-code-examples/tree/master/pytorch/vision
-   
+
 """
 
 import json
@@ -147,3 +147,96 @@ def load_checkpoint(checkpoint, model, optimizer=None):
         optimizer.load_state_dict(checkpoint['optim_dict'])
 
     return checkpoint
+
+
+##############################
+# Modified WARP loss utility 
+# - Reference: https://arxiv.org/pdf/1312.4894.pdf
+import numpy as np
+import math
+import torch
+import torch.nn as nn
+from torch.autograd import Variable, Function
+import random
+
+class WARP(Function): 
+    """
+    Autograd function of WARP loss. Appropirate for multi-label
+    - Reference: 
+      https://medium.com/@gabrieltseng/intro-to-warp-loss-automatic-differentiation-and-pytorch-b6aa5083187a
+    """
+    @staticmethod
+    def forward(ctx, input, target, max_num_trials = None):
+        batch_size = target.size()[0]
+        label_size = target.size()[1]
+
+        ## rank weight 
+        rank_weights = [1.0/1]
+        for i in range(1, label_size):
+            rank_weights.append(rank_weights[i-1] + (1.0/i+1))
+
+        if max_num_trials is None: 
+            max_num_trials = target.size()[1] - 1
+
+        ##
+        positive_indices = target.gt(0).float()
+        negative_indices = target.eq(0).float()
+        L = torch.zeros(input.size())
+
+        ##
+        loss = 0.
+        for i in range(batch_size):
+            for j in range(label_size):
+                if target[i,j] == 1:
+                    ## initialization
+                    sample_score_margin = -1
+                    num_trials = 0
+
+                    while ((sample_score_margin < 0) and (num_trials < max_num_trials)):
+                        ## sample a negative label, to only determine L (ranking weight)
+                        neg_labels_idx = np.array([idx for idx, v in enumerate(target[i,:]) if v == 0])
+
+                        if len(neg_labels_idx) > 0:                        
+                            neg_idx = np.random.choice(neg_labels_idx, replace=False)
+                            sample_score_margin = 1 - input[i, j] + input[i, neg_idx]
+                            num_trials += 1
+
+                        else: # ignore cases where all labels are 1...
+                            num_trials = 1
+                            sample_score_margin = 0
+
+                    ## how many trials determine the weight
+                    r_j = int(np.floor(max_num_trials / num_trials))
+                    L[i,j] = rank_weights[r_j]
+                            
+        ## summing over all negatives and positives        
+        loss = torch.clamp(torch.sum(L*(1-torch.sum(positive_indices*input,dim=1,keepdim=True) + \
+                                          torch.sum(negative_indices*input,dim=1,keepdim=True)),dim=1),min=0.0)
+        
+        ctx.save_for_backward(input, target)
+        ctx.L = L
+        ctx.positive_indices = positive_indices
+        ctx.negative_indices = negative_indices
+        
+        return torch.sum(loss, dim=0, keepdim=True)
+
+    # This function has only a single output, so it gets only one gradient 
+    @staticmethod
+    def backward(ctx, grad_output):
+        input, target = ctx.saved_variables
+        L = Variable(ctx.L, requires_grad = False)
+        positive_indices = Variable(ctx.positive_indices, requires_grad = False) 
+        negative_indices = Variable(ctx.negative_indices, requires_grad = False)
+
+        grad_input = grad_output*L*(negative_indices - positive_indices)
+
+        return grad_input, None, None
+
+#--- main class
+class WARPLoss(nn.Module): 
+    def __init__(self, max_num_trials = None): 
+        super(WARPLoss, self).__init__()
+        self.max_num_trials = max_num_trials
+        
+    def forward(self, input, target): 
+        return WARP.apply(input, target, self.max_num_trials)

@@ -908,6 +908,20 @@ def loss_fn(outputs, labels):
     """
     return nn.BCEWithLogitsLoss()(outputs, labels)
 
+## WARP loss
+#-- Weighted Approximate-Rank Pairwise loss
+import sys; sys.path.append('../codes/')
+from utils import WARP, WARPLoss
+
+def loss_warp(outputs, labels):
+    """
+    Sigmoid + WARP loss
+    """
+    return WARPLoss()(F.sigmoid(outputs), labels)
+
+
+##########################################
+
 def accuracy(outputs, labels, threshold):
     """
     Compute the accuracy given the outputs and labels for all images.

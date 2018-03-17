@@ -218,7 +218,7 @@ if __name__ == '__main__':
             dataloaders = data_loader.fetch_dataloader(['train', 'val'], args.data_dir, params, mixing=False)
     else:
         dataloaders = data_loader.fetch_dataloader(['train', 'val'], args.data_dir, params, mixing=True)
-        
+
     train_dl = dataloaders['train']
     val_dl   = dataloaders['val']
 
@@ -268,7 +268,11 @@ if __name__ == '__main__':
             loss_fn = net.loss_fn_sing
             metrics = net.metrics_sing
     else:
-        loss_fn = net.loss_fn
+        if hasattr(params,'warp'):
+            if params.warp == 1: # use WARP loss
+                loss_fn = net.loss_warp
+        else:
+            loss_fn = net.loss_fn
         metrics = net.metrics
 
     # Train the model
