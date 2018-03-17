@@ -198,37 +198,40 @@ class WARP(Function):
 
                         if len(neg_labels_idx) > 0:                        
                             neg_idx = np.random.choice(neg_labels_idx, replace=False)
-                            sample_score_margin = 1 - input[i, j] + input[i, neg_idx]
+                            ## if model thinks neg ranks before pos...
+                            sample_score_margin = input[i,neg_idx] - input[i,j]
                             num_trials += 1
 
                         else: # ignore cases where all labels are 1...
                             num_trials = 1
-                            sample_score_margin = 0
+                            pass
 
                     ## how many trials determine the weight
                     r_j = int(np.floor(max_num_trials / num_trials))
                     L[i,j] = rank_weights[r_j]
-                            
-        ## summing over all negatives and positives        
-        loss = torch.clamp(torch.sum(L*(1-torch.sum(positive_indices*input,dim=1,keepdim=True) + \
-                                          torch.sum(negative_indices*input,dim=1,keepdim=True)),dim=1),min=0.0)
         
-        ctx.save_for_backward(input, target)
+        ## summing over all negatives and positives
+        #-- since inputs are sigmoided, no need for clamp with min=0
+        loss = torch.sum(L*(torch.sum(1 - positive_indices*input + \
+                                          negative_indices*input, dim=1, keepdim=True)),dim=1)
+        #ctx.save_for_backward(input, target)
         ctx.L = L
         ctx.positive_indices = positive_indices
         ctx.negative_indices = negative_indices
         
-        return torch.sum(loss, dim=0, keepdim=True)
+        return torch.sum(loss, dim=0)
 
     # This function has only a single output, so it gets only one gradient 
     @staticmethod
     def backward(ctx, grad_output):
-        input, target = ctx.saved_variables
+        #input, target = ctx.saved_variables
         L = Variable(ctx.L, requires_grad = False)
         positive_indices = Variable(ctx.positive_indices, requires_grad = False) 
         negative_indices = Variable(ctx.negative_indices, requires_grad = False)
 
-        grad_input = grad_output*L*(negative_indices - positive_indices)
+        pos_grad = torch.sum(L,dim=1,keepdim=True)*(-positive_indices)
+        neg_grad = torch.sum(L,dim=1,keepdim=True)*negative_indices
+        grad_input = grad_output*(pos_grad+neg_grad)
 
         return grad_input, None, None
 
@@ -239,4 +242,4 @@ class WARPLoss(nn.Module):
         self.max_num_trials = max_num_trials
         
     def forward(self, input, target): 
-        return WARP.apply(input, target, self.max_num_trials)
+        return WARP.apply(input.cpu(), target.cpu(), self.max_num_trials)

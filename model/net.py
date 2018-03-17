@@ -916,7 +916,7 @@ def loss_warp(outputs, labels):
     """
     Sigmoid + WARP loss
     """
-    return WARPLoss()(F.sigmoid(outputs), labels)
+    return WARPLoss()(F.sigmoid(outputs),labels)
 
 
 ##########################################
