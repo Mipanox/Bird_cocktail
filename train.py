@@ -247,12 +247,12 @@ if __name__ == '__main__':
 
     # optimizer
     if params.optimizer == 1:
-        print('  ---optimizer is Adam'); print('')
+        print('  ---optimizer is Adam')
         optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
         if hasattr(params,'lambd'):
             optimizer = optim.Adam(model.parameters(), lr=params.learning_rate, weight_decay=params.lambd)
     elif params.optimizer == 2:
-        print('  ---optimizer is SGD'); print('')
+        print('  ---optimizer is SGD')
         optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=params.learning_rate)
         if hasattr(params,'lambd'):
             optimizer = optim.SGD(model.parameters(), lr=params.learning_rate, momentum=0.9, weight_decay=params.lambd)
@@ -268,10 +268,15 @@ if __name__ == '__main__':
             loss_fn = net.loss_fn_sing
             metrics = net.metrics_sing
     else:
-        if hasattr(params,'warp'):
-            if params.warp == 1: # use WARP loss
+        if hasattr(params,'loss_fn'):
+            if params.loss_fn == 1: # use WARP loss
+                print('  ---loss function is WARP'); print('')
                 loss_fn = net.loss_warp
+            elif params.loss_fn == 2: # use LSEP loss
+                print('  ---loss function is LSEP'); print('')
+                loss_fn = net.loss_lsep
         else:
+            print('  ---loss function is BCE'); print('')
             loss_fn = net.loss_fn
         metrics = net.metrics
 

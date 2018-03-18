@@ -918,6 +918,16 @@ def loss_warp(outputs, labels):
     """
     return WARPLoss()(F.sigmoid(outputs),labels)
 
+## LSEP loss
+#-- Log-sum-exp-pairwise loss
+from utils import LSEP, LSEPLoss
+
+def loss_lsep(outputs, labels):
+    """
+    Sigmoid + LSEP loss
+    """
+    return LSEPLoss()(F.sigmoid(outputs),labels)
+
 
 ##########################################
 
