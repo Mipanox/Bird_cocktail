@@ -1,0 +1,21 @@
+{
+	"model": 3,
+	"width": 128,
+    "learning_rate": 1e-2,
+    "lr_decay_gamma": 0.94,
+    "lr_decay_step": 2,
+    "batch_size": 32,
+    "num_epochs": 10,
+    "save_summary_steps": 100,
+    "num_workers": 4,
+    "optimizer": 1,
+    "aug_factor": 1,
+
+    "growthRate": 12, 
+    "depth": 15, 
+    "reduction": 0.5,
+    "threshold": 0.5,
+
+
+    "dropout": 0.5
+}
