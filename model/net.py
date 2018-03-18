@@ -897,6 +897,115 @@ class ResNet18(nn.Module):
 
 
 
+#--------------------------#
+#---- Binary Relevance ----#
+
+#############################
+## Main Network Definition ##
+class DenseNetBR(nn.Module):
+    """
+    Same as DenseNetBase except for last layer output size
+    """
+
+    def __init__(self, params):
+        """
+        Args:
+            params: (Params) contains growthRate, depth, reduction, bottleneck
+        """
+        super(DenseNetBR, self).__init__()
+
+        growthRate = params.growthRate
+        depth      = params.depth
+        reduction  = params.reduction
+        bottleneck = True #params.bottleneck
+
+        nDenseBlocks = (depth-4) // 3
+        if bottleneck:
+            nDenseBlocks //= 2
+
+        nChannels = 2*growthRate
+        self.conv1 = nn.Conv2d(1, nChannels, kernel_size=3, padding=1, bias=False)
+        self.dense1 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        nChannels += nDenseBlocks*growthRate
+        nOutChannels = int(math.floor(nChannels*reduction))
+        self.trans1 = Transition(nChannels, nOutChannels)
+        
+        nChannels = nOutChannels
+        self.dense2 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        nChannels += nDenseBlocks*growthRate
+        nOutChannels = int(math.floor(nChannels*reduction))
+        self.trans2 = Transition(nChannels, nOutChannels)
+        
+        nChannels = nOutChannels
+        self.dense3 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        nChannels += nDenseBlocks*growthRate
+
+        self.bn1 = nn.BatchNorm2d(nChannels)
+        ##                             input channel determined by dimension of imgs
+        self.fc = nn.Linear(nChannels*(128*params.width)/32**2, 1)
+        
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.bias.data.zero_()
+
+    def _make_dense(self, nChannels, growthRate, nDenseBlocks, bottleneck):
+        """ Construct dense layers """
+
+        layers = []
+        for i in range(int(nDenseBlocks)):
+            if bottleneck:
+                layers.append(Bottleneck(nChannels, growthRate))
+            else:
+                layers.append(SingleLayer(nChannels, growthRate))
+            nChannels += growthRate
+
+        return nn.Sequential(*layers)
+
+    def forward(self, s):
+        """
+        Args:
+            s: (Variable) contains a batch of images, of dimension batch_size x 1 x 128 x params.width
+
+        Returns:
+            out: (Variable) dimension batch_size x 1
+        """
+        out = self.conv1(s)
+        out = self.trans1(self.dense1(out))
+        out = self.trans2(self.dense2(out))
+        out = self.dense3(out)
+        out = torch.squeeze(F.avg_pool2d(F.relu(self.bn1(out)), 8))
+        out = out.view(out.size()[0], -1)
+        return self.fc(out)
+
+class DenseBR(nn.Module):
+    """
+    Binary relevance constructor for DenseNetBR
+    """
+
+    def __init__(self, params, num_classes):
+        super(DenseBR, self).__init__()
+        self.num_classes = num_classes
+        
+        self.branches = nn.ModuleList([])
+        for i in range(num_classes):
+            self.branches.append(DenseNetBR(params))
+
+    def forward(self, s):
+        
+        s_br = []
+        for i in range(self.num_classes):
+            s_br.append(self.branches[i](s))
+        
+        s = torch.cat(s_br, 1)
+        
+        return s
+
 
 
 
