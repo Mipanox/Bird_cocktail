@@ -1,0 +1,21 @@
+{
+	"model": 7,
+	"width": 192,
+	"aug_factor": 2,
+    "learning_rate": 2e-7,
+    "batch_size": 32,
+    "num_epochs": 20,
+    "save_summary_steps": 10,
+    "num_workers": 4,
+    "lambd": 1e-4,
+    "num_channels": 32,
+
+    "growthRate": 12, 
+    "depth": 20, 
+    "reduction": 0.5,
+    "optimizer": 1,
+    "threshold": 0.5,
+
+
+    "dropout": 0.5
+}
