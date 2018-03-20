@@ -249,6 +249,11 @@ if __name__ == '__main__':
         print('  -- Training using DenseNet with Binary Relevance')
         model = net.DenseBR(params,args.num_classes).cuda() if params.cuda else net.DenseBR(params,args.num_classes)
 
+    elif params.model == 7:
+        print('  -- Training using ResNet with Binary Relevance')
+        model = net.ResBR(params,args.num_classes).cuda() if params.cuda else net.ResBR(params,args.num_classes)
+
+
     # optimizer
     if params.optimizer == 1:
         print('  ---optimizer is Adam')

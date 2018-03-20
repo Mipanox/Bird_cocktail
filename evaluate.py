@@ -22,6 +22,7 @@ from tensorboardX import SummaryWriter
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir'    , default='datasets/spec_split'   , help="Directory containing the splitted dataset")
 parser.add_argument('--model_dir'   , default='experiments/base_model', help="Directory containing params.json")
+parser.add_argument('--num_classes' , default=300, type=int, help="Numer of classes as in splitting datasets")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
 
@@ -46,6 +47,7 @@ def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch):
     summ = []
 
     # compute metrics over the dataset
+    cm = []
     for i, (data_batch, labels_batch) in enumerate(dataloader):
         # move to GPU if available
         if params.cuda:
@@ -68,6 +70,17 @@ def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch):
             niter = epoch*len(dataloader)+i
             for tag, value in summary_batch.items():
                 writer.add_scalar(tag, value, niter)
+
+        if hasattr(params,'if_single'): 
+            if params.if_single == 1: # single-label
+                cm.append(utils.confusion_matrix(output_batch, labels_batch))
+
+    ## confusion matrix
+    if hasattr(params,'if_single'): 
+        if params.if_single == 1: # single-label
+            cm = np.array(cm)
+            cm = np.mean(cm, axis=0)
+            np.save('./cm{}.npy'.format(str(epoch).zfill(3)),cm)
 
     # compute mean of all metrics in summary
     metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]} 
@@ -101,7 +114,11 @@ if __name__ == '__main__':
     logging.info("Creating the dataset...")
 
     # fetch dataloaders
-    dataloaders = data_loader.fetch_dataloader(['test'], args.data_dir, params)
+    if hasattr(params,'if_single'): 
+        if params.if_single == 1: # single-label
+            dataloaders = data_loader.fetch_dataloader(['test'], args.data_dir, params, mixing=False)
+    else:
+        dataloaders = data_loader.fetch_dataloader(['test'], args.data_dir, params)
     test_dl = dataloaders['test']
 
     logging.info("- done.")
@@ -119,10 +136,27 @@ if __name__ == '__main__':
         model = net.ResNet18(params,args.num_classes).cuda() if params.cuda else net.ResNet18(params,args.num_classes)
     elif params.model == 6:
         model = net.DenseBR(params,args.num_classes).cuda() if params.cuda else net.DenseBR(params,args.num_classes)
+    elif params.model == 7:
+        model = net.ResBR(params,args.num_classes).cuda() if params.cuda else net.ResBR(params,args.num_classes)
 
 
-    loss_fn = net.loss_fn
-    metrics = net.metrics
+    # fetch loss function and metrics
+    if hasattr(params,'if_single'): 
+        if params.if_single == 1: # single-label
+            loss_fn = net.loss_fn_sing
+            metrics = net.metrics_sing
+    else:
+        if hasattr(params,'loss_fn'):
+            if params.loss_fn == 1: # use WARP loss
+                print('  ---loss function is WARP'); print('')
+                loss_fn = net.loss_warp
+            elif params.loss_fn == 2: # use LSEP loss
+                print('  ---loss function is LSEP'); print('')
+                loss_fn = net.loss_lsep
+        else:
+            print('  ---loss function is BCE'); print('')
+            loss_fn = net.loss_fn
+        metrics = net.metrics
     
     logging.info("Starting evaluation")
 
@@ -130,6 +164,6 @@ if __name__ == '__main__':
     utils.load_checkpoint(os.path.join(args.model_dir, args.restore_file + '.pth.tar'), model)
 
     # Evaluate
-    test_metrics = evaluate(model, loss_fn, test_dl, metrics, params)
+    test_metrics = evaluate(model, loss_fn, test_dl, metrics, params, args.num_classes, 1)
     save_path = os.path.join(args.model_dir, "metrics_test_{}.json".format(args.restore_file))
     utils.save_dict_to_json(test_metrics, save_path)

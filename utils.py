@@ -333,7 +333,7 @@ class LSEP(Function):
                     grad_input[i] += (phot-nhot)*torch.exp(-input[i].data*(phot-nhot))
         ## 
         grad_input = Variable(grad_input) * (grad_output * fac)
-        
+
         return grad_input, None, None
     
 #--- main class
@@ -343,3 +343,23 @@ class LSEPLoss(nn.Module):
         
     def forward(self, input, target): 
         return LSEP.apply(input.cpu(), target.cpu())
+
+
+
+####################
+# confusion matrix #
+import torch.nn.functional as F
+import sklearn.metrics as met
+
+def confusion_matrix(outputs, labels):
+    nlabels = outputs.shape[1]
+    
+    outputs = np.argmax(F.softmax(outputs, dim=1).data.cpu().numpy(),axis=1)
+    labels  = labels.data.cpu().numpy()
+    
+    cm = met.confusion_matrix(labels, outputs, np.arange(nlabels))
+    cm = cm.astype('float')*10 / cm.sum(axis=1)[:, np.newaxis]
+    cm = np.nan_to_num(cm, copy=True)
+    cm = cm.astype('int')
+    
+    return cm
