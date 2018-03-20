@@ -44,6 +44,25 @@ class Bottleneck(nn.Module):
         out = torch.cat((x, out), 1)
         return out
 
+class Bottleneck1D(nn.Module):
+    def __init__(self, nChannels, growthRate):
+        super(Bottleneck1D, self).__init__()
+        interChannels = 4*growthRate
+        self.bn1 = nn.BatchNorm2d(nChannels)
+        self.conv1 = nn.Conv2d(nChannels, interChannels, kernel_size=1,
+                               bias=False)
+        self.bn2 = nn.BatchNorm2d(interChannels)
+        self.conv2 = nn.Conv2d(interChannels, growthRate, kernel_size=(3,1),
+                               padding=(1,0), bias=False)
+
+    def forward(self, x):
+        out = self.conv1(F.relu(self.bn1(x)))
+        out = self.conv2(F.relu(self.bn2(out)))
+        out = torch.cat((x, out), 1)
+        return out
+
+
+
 class SingleLayer(nn.Module):
     def __init__(self, nChannels, growthRate):
         super(SingleLayer, self).__init__()
@@ -55,6 +74,19 @@ class SingleLayer(nn.Module):
         out = self.conv1(F.relu(self.bn1(x)))
         out = torch.cat((x, out), 1)
         return out
+class SingleLayer1D(nn.Module):
+    def __init__(self, nChannels, growthRate):
+        super(SingleLayer, self).__init__()
+        self.bn1 = nn.BatchNorm2d(nChannels)
+        self.conv1 = nn.Conv2d(nChannels, growthRate, kernel_size=(3,1),
+                               padding=1, bias=False)
+
+    def forward(self, x):
+        out = self.conv1(F.relu(self.bn1(x)))
+        out = torch.cat((x, out), 1)
+        return out
+
+
 
 class Transition(nn.Module):
     def __init__(self, nChannels, nOutChannels):
@@ -67,6 +99,19 @@ class Transition(nn.Module):
         out = self.conv1(F.relu(self.bn1(x)))
         out = F.avg_pool2d(out, 2)
         return out
+class Transition1D(nn.Module):
+    def __init__(self, nChannels, nOutChannels):
+        super(Transition1D, self).__init__()
+        self.bn1 = nn.BatchNorm2d(nChannels)
+        self.conv1 = nn.Conv2d(nChannels, nOutChannels, kernel_size=1,
+                               bias=False)
+
+    def forward(self, x):
+        out = self.conv1(F.relu(self.bn1(x)))
+        out = F.avg_pool2d(out, (2,1))
+        return out
+
+
 
 
 #############################
@@ -101,18 +146,20 @@ class DenseNetBase(nn.Module):
         self.trans1 = Transition(nChannels, nOutChannels)
         
         nChannels = nOutChannels
-        self.dense2 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        self.dense2 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck, oneD=False)
         nChannels += nDenseBlocks*growthRate
         nOutChannels = int(math.floor(nChannels*reduction))
         self.trans2 = Transition(nChannels, nOutChannels)
         
         nChannels = nOutChannels
-        self.dense3 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        self.dense3 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck, oneD=False)
         nChannels += nDenseBlocks*growthRate
 
         self.bn1 = nn.BatchNorm2d(nChannels)
         ##                             input channel determined by dimension of imgs
-        self.fc = nn.Linear(nChannels*(128*params.width)/32**2, nClasses)
+        self.avg2 = nn.AvgPool2d((32,1),stride=(1,1))
+        self.lstm = torch.nn.LSTM(nChannels,16,batch_first=True, bidirectional=True)
+        self.fc = nn.Linear(1024, nClasses)
         
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -124,13 +171,18 @@ class DenseNetBase(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.bias.data.zero_()
 
-    def _make_dense(self, nChannels, growthRate, nDenseBlocks, bottleneck):
+    def _make_dense(self, nChannels, growthRate, nDenseBlocks, bottleneck, oneD=False):
         """ Construct dense layers """
 
         layers = []
         for i in range(int(nDenseBlocks)):
             if bottleneck:
-                layers.append(Bottleneck(nChannels, growthRate))
+                if oneD:
+                    layers.append(Bottleneck1D(nChannels, growthRate))
+                else:
+                    layers.append(Bottleneck(nChannels, growthRate))
+            elif oneD:
+                layers.append(SingleLayer1D(nChannels, growthRate))
             else:
                 layers.append(SingleLayer(nChannels, growthRate))
             nChannels += growthRate
@@ -149,7 +201,15 @@ class DenseNetBase(nn.Module):
         out = self.trans1(self.dense1(out))
         out = self.trans2(self.dense2(out))
         out = self.dense3(out)
-        out = torch.squeeze(F.avg_pool2d(F.relu(self.bn1(out)), 8))
+        out = self.avg2(out)
+        out = self.bn1(out)
+        out = F.relu(out)
+        out = out.squeeze()
+        out = torch.transpose(out, 1, 2)
+        #print(out.size())
+        out, _ = self.lstm(out)
+        out = out.contiguous()
+        #out = torch.squeeze(F.avg_pool2d(F.relu(self.bn1(out)), (1,8)))
         out = out.view(out.size()[0], -1)
         return self.fc(out)
 

@@ -27,7 +27,7 @@ parser.add_argument('--restore_file', default='best', help="name of the file in 
 
 writer = SummaryWriter('tensorboardlogs/vallog')
 
-def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch):
+def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch, logger, global_step):
     """Evaluate the model on `num_steps` batches.
 
     Args:
@@ -67,8 +67,7 @@ def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch):
             ## tensorboard logging
             niter = epoch*len(dataloader)+i
             for tag, value in summary_batch.items():
-                writer.add_scalar(tag, value, niter)
-
+                logger.scalar_summary(tag, value, global_step)
     # compute mean of all metrics in summary
     metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]} 
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v) for k, v in metrics_mean.items())

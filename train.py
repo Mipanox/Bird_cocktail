@@ -33,7 +33,7 @@ parser.add_argument('--restore_file', default=None,
 
 writer = SummaryWriter('tensorboardlogs/trainlog')
 
-def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
+def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch, logger, global_step):
     """Train the model on `num_steps batches
 
     Args:
@@ -63,6 +63,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
     # Use tqdm for progress bar
     with tqdm(total=len(dataloader)) as t:
         for i, (train_batch, labels_batch) in enumerate(dataloader):
+            global_step+=1
             # move to GPU if available
             if params.cuda:
                 train_batch, labels_batch = train_batch.cuda(async=True), labels_batch.cuda(async=True)
@@ -92,7 +93,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
                 ## tensorboard logging
                 niter = epoch*len(dataloader)+i
                 for tag, value in summary_batch.items():
-                    writer.add_scalar(tag, value, niter)
+                    logger.scalar_summary(tag, value, global_step)
 
                 #-- Log values and gradients of the parameters (histogram)
                 # for name, param in model.named_parameters():
@@ -143,11 +144,14 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         utils.load_checkpoint(restore_path, model, optimizer)
 
     best_val_met = 0.0
+    logger_train = utils.Logger(model_dir+"/train/")
+    logger_eval = utils.Logger(model_dir+"/eval/")
 
     scheduler = None
     if hasattr(params,'lr_decay_gamma'):
         scheduler = StepLR(optimizer, step_size=params.lr_decay_step, gamma=params.lr_decay_gamma)
 
+    global_step = 0
     for epoch in range(params.num_epochs):
         # Run one epoch
         logging.info("Epoch {}/{}".format(epoch + 1, params.num_epochs))
@@ -157,10 +161,10 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             scheduler.step()
 
         # compute number of batches in one epoch (one full pass over the training set)
-        train(model, optimizer, loss_fn, train_dataloader, metrics, params, epoch)
+        train(model, optimizer, loss_fn, train_dataloader, metrics, params, epoch, logger_train, global_step)
 
         # Evaluate for one epoch on validation set
-        val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params, args.num_classes, epoch)
+        val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params, params.num_classes, epoch, logger_eval, global_step)
 
         if hasattr(params,'if_single'): 
             if params.if_single == 1: # single-label
@@ -227,11 +231,11 @@ if __name__ == '__main__':
     # Define the model and optimizer
     if params.model == 1:
         print('  -- Training using DenseNet')
-        model = net.DenseNetBase(params,args.num_classes).cuda() if params.cuda else net.DenseNetBase(params,args.num_classes)
+        model = net.DenseNetBase(params,params.num_classes).cuda() if params.cuda else net.DenseNetBase(params,params.num_classes)
 
     elif params.model == 2:
         print('  -- Training using SqueezeNet')
-        model = net.SqueezeNetBase(params,args.num_classes).cuda() if params.cuda else net.SqueezeNetBase(params,args.num_classes)
+        model = net.SqueezeNetBase(params,params.num_classes).cuda() if params.cuda else net.SqueezeNetBase(params,params.num_classes)
 
     elif params.model == 3:
         print('  -- Training using Inception')
@@ -243,7 +247,7 @@ if __name__ == '__main__':
 
     elif params.model == 5:
         print('  -- Training using ResNet')
-        model = net.ResNet18(params,args.num_classes).cuda() if params.cuda else net.ResNet18(params,args.num_classes)
+        model = net.ResNet18(params,params.num_classes).cuda() if params.cuda else net.ResNet18(params,params.num_classes)
 
     elif params.model == 6:
         print('  -- Training using DenseNet with Binary Relevance')
@@ -264,7 +268,7 @@ if __name__ == '__main__':
     ## tensorboar logging
     dummy_input = Variable(torch.rand(params.batch_size,1,128,params.width).cuda(async=True) if params.cuda else \
                            torch.rand(params.batch_size,1,128,params.width))
-    writer.add_graph(model, (dummy_input, ))
+    #writer.add_graph(model, (dummy_input, ))
 
     # fetch loss function and metrics
     if hasattr(params,'if_single'): 
@@ -289,5 +293,5 @@ if __name__ == '__main__':
     train_and_evaluate(model, train_dl, val_dl, optimizer, loss_fn, metrics, params, args.model_dir,
                        args.restore_file)
 
-    writer.export_scalars_to_json("./all_scalars.json")
-    writer.close()
+    #writer.export_scalars_to_json("./all_scalars.json")
+    #writer.close()
