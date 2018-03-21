@@ -219,8 +219,9 @@ Currently, we support training with the following models, loss functions, optimi
   3. Inception-v4 [[p5,r4]](https://github.com/Mipanox/Bird_cocktail#papers): `model: 3`
   4. InceptionResNet [[p5,r4]](https://github.com/Mipanox/Bird_cocktail#papers): `model: 4`
   5. ResNet [[p2,o3]](https://github.com/Mipanox/Bird_cocktail#papers): `model: 5`
-  6. DenseNet+BinaryRelevance: `model: 6`
-  7. ResNet+BinaryRelevance: `model: 7`
+  6. DenseNet+BinaryRelevance (DenseNet+BR): `model: 6`
+  7. ResNet+BinaryRelevance (ResNet+BR): `model: 7`
+  8. DensNet+BLSTM: `model: 8`
 - **Loss Functions**
   1. Binary-Cross-Entropy (BCE) loss: `(none; default)`
   2. Weighted-Approximate-Ranking Pairwise (WARP) loss [[p7]](https://github.com/Mipanox/Bird_cocktail#papers): `loss_fn: 1`
@@ -255,7 +256,7 @@ The code will generate a table which summarizes the metrics on the validation se
 ### Evaluation on Test Set
 Once you've run many experiments and selected your best model and hyperparameters based on the performance on the validation set, you can finally evaluate the performance of your model on the test set:
 ```
-python evaluate.py --data_dir data/64x64_SIGNS --model_dir <path-to-json-of-the-selected-model>
+python evaluate.py --data_dir <path-to-test-data> --model_dir <path-to-json-of-the-selected-model>
 ```
 
 For single-label problem specifically, we have confusion matrix computed for you. Upon completing either training or evaluation, confusion matrices will be stored in folders like `cm_val` or `cm_test`. You can plot each of them using the function in `utils.py` by calling
@@ -276,7 +277,7 @@ We were developing, training, and testing on AWS's Deep Learning AMI for 10 comm
 These 40,000 spectrograms correspond to roughly 25+ hours of field recordings. They were all obtained and processed with the pipeline outlined above.
 
 ### Single-label Benchmark
-Quoting the best-ever results, the [ResNet_02](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/single-label/resnet_02_new) achieved 1.000 and 0.942 accuracy. Below shows an example training curve (in the middle of training):
+Quoting the best-ever-achieved results, the [ResNet_02](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/single-label/resnet_02_new) achieved 1.000 and 0.942 accuracy for training and validation sets respectively. Below shows an example training curve (in the middle of training):
 <p align="center"><img src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/sing_res_07_tb.png" width="500"/></p> 
 
 and the best confusion matrix evaluated on test set (notice the log-scale colorbar):
@@ -285,6 +286,18 @@ and the best confusion matrix evaluated on test set (notice the log-scale colorb
 
 
 ### Multi-label Model Comparison
+The following table summarizes the performance of some noteworthy models on validation set (not meant to be complete!):
+
+
+|               model        |   loss fn |       f1 |   recall |   precision | regularization | comments |
+|:--------------------------:|:---------:|:--------:|:----- --:|:-----------:|:--------------:|:---------|
+| [ResNet+BR_02](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_3_) | BCE | **0.831** | 0.804 | **0.904** | None | multiple stages of training from [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02) and [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_2) |
+| [DenseNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/lsep_dense_06) | LSEP | 0.735 | 0.686 | 0.856 | Early Stopping | high variance |
+| [DenseNet+LSTM](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/densenet_blstm) | LSEP | 0.654 | 0.579 | 0.651 | L2 | |
+| [ResNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/lsep_resnet_01) | LSEP | 0.793 | 0.759 | 0.830 | L2 | |
+| [ResNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_01) | BCE  | 0.770 | **0.854**| 0.741 | L2 | Training fastest |
+| [DenseNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/densenet_07) | BCE | 0.703 | 0.729 | 0.734 | Early stopping | high variance |
+
 
 
 _[(back to top)](https://github.com/Mipanox/Bird_cocktail#content)_
