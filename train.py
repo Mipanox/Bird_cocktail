@@ -243,7 +243,7 @@ if __name__ == '__main__':
 
     elif params.model == 5:
         print('  -- Training using ResNet')
-        model = net.ResNet18(params,args.num_classes).cuda() if params.cuda else net.ResNet18(params,args.num_classes)
+        model = net.ResNet14(params,args.num_classes).cuda() if params.cuda else net.ResNet14(params,args.num_classes)
 
     elif params.model == 6:
         print('  -- Training using DenseNet with Binary Relevance')
@@ -252,6 +252,10 @@ if __name__ == '__main__':
     elif params.model == 7:
         print('  -- Training using ResNet with Binary Relevance')
         model = net.ResBR(params,args.num_classes).cuda() if params.cuda else net.ResBR(params,args.num_classes)
+
+    elif params.model == 8:
+        print('  -- Training using DenseNet + BLSTM')
+        model = net.DenseNetBLSTM(params,args.num_classes).cuda() if params.cuda else net.DenseNetBLSTM(params,args.num_classes)
 
 
     # optimizer

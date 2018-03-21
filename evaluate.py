@@ -28,7 +28,7 @@ parser.add_argument('--restore_file', default='best', help="name of the file in 
 
 writer = SummaryWriter('tensorboardlogs/vallog')
 
-def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch):
+def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch, eva=False):
     """Evaluate the model on `num_steps` batches.
 
     Args:
@@ -80,7 +80,10 @@ def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch):
         if params.if_single == 1: # single-label
             cm = np.array(cm)
             cm = np.mean(cm, axis=0)
-            np.save('./cm{}.npy'.format(str(epoch).zfill(3)),cm)
+            if eva: # if on test set
+                np.save('./cm_test/cm.npy',cm)
+            else:
+                np.save('./cm_val/cm{}.npy'.format(str(epoch).zfill(3)),cm)
 
     # compute mean of all metrics in summary
     metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]} 
@@ -133,12 +136,13 @@ if __name__ == '__main__':
     elif params.model == 4:
         model = net.InceptionResnetBase(params,args.num_classes).cuda() if params.cuda else net.InceptionResnetBase(params,args.num_classes)
     elif params.model == 5:
-        model = net.ResNet18(params,args.num_classes).cuda() if params.cuda else net.ResNet18(params,args.num_classes)
+        model = net.ResNet14(params,args.num_classes).cuda() if params.cuda else net.ResNet14(params,args.num_classes)
     elif params.model == 6:
         model = net.DenseBR(params,args.num_classes).cuda() if params.cuda else net.DenseBR(params,args.num_classes)
     elif params.model == 7:
         model = net.ResBR(params,args.num_classes).cuda() if params.cuda else net.ResBR(params,args.num_classes)
-
+    elif params.model == 8:
+        model = net.DenseNetBLSTM(params,args.num_classes).cuda() if params.cuda else net.DenseNetBLSTM(params,args.num_classes)
 
     # fetch loss function and metrics
     if hasattr(params,'if_single'): 
@@ -164,6 +168,6 @@ if __name__ == '__main__':
     utils.load_checkpoint(os.path.join(args.model_dir, args.restore_file + '.pth.tar'), model)
 
     # Evaluate
-    test_metrics = evaluate(model, loss_fn, test_dl, metrics, params, args.num_classes, 1)
+    test_metrics = evaluate(model, loss_fn, test_dl, metrics, params, args.num_classes, 1, eva=True)
     save_path = os.path.join(args.model_dir, "metrics_test_{}.json".format(args.restore_file))
     utils.save_dict_to_json(test_metrics, save_path)

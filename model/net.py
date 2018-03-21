@@ -834,16 +834,16 @@ class Block(nn.Module):
 
 #############################
 ## Main Network Definition ##
-class ResNet18(nn.Module):
+class ResNet14(nn.Module):
     """
-    Modified from ResNet18
+    Modified from ResNet18 = ResNet14
     """
     def __init__(self, params, num_classes):
         """
         Args:
             params: (Params) contains num_channels
         """
-        super(ResNet18, self).__init__()
+        super(ResNet14, self).__init__()
         layers = [2,2,2,2]
         self.num_channels = params.num_channels
         self.inchannels   = params.num_channels
@@ -1010,7 +1010,7 @@ class DenseBR(nn.Module):
 # ResNetBR
 class ResNetBR(nn.Module):
     """
-    Modified from ResNet18 above, different only in last layer's output
+    Modified from ResNet14 above, different only in last layer's output
     """
     def __init__(self, params):
         """
@@ -1091,6 +1091,104 @@ class ResBR(nn.Module):
         s = torch.cat(s_br, 1)
         
         return s
+
+
+#---------------#
+#---- BLSTM ----#
+
+#############################
+## Main Network Definition ##
+class DenseNetBLSTM(nn.Module):
+    def __init__(self, params, num_classes):
+        """
+        Args:
+            params: (Params) contains growthRate, depth, reduction, bottleneck
+        """
+        super(DenseNetBase, self).__init__()
+
+        growthRate = params.growthRate
+        depth      = params.depth
+        reduction  = params.reduction
+        nClasses   = num_classes
+        bottleneck = True
+
+        nDenseBlocks = (depth-4) // 3
+        if bottleneck:
+            nDenseBlocks //= 2
+
+        nChannels = 2*growthRate
+        self.conv1 = nn.Conv2d(1, nChannels, kernel_size=3, padding=1, bias=False)
+        self.dense1 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        nChannels += nDenseBlocks*growthRate
+        nOutChannels = int(math.floor(nChannels*reduction))
+        self.trans1 = Transition(nChannels, nOutChannels)
+        
+        nChannels = nOutChannels
+        self.dense2 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck, oneD=False)
+        nChannels += nDenseBlocks*growthRate
+        nOutChannels = int(math.floor(nChannels*reduction))
+        self.trans2 = Transition(nChannels, nOutChannels)
+        
+        nChannels = nOutChannels
+        self.dense3 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck, oneD=False)
+        nChannels += nDenseBlocks*growthRate
+
+        self.bn1 = nn.BatchNorm2d(nChannels)        
+        self.avg2 = nn.AvgPool2d((32,1),stride=(1,1))
+        self.lstm = torch.nn.LSTM(nChannels,16,batch_first=True, bidirectional=True)
+        self.fc = nn.Linear(1024, nClasses)
+        
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.bias.data.zero_()
+
+    def _make_dense(self, nChannels, growthRate, nDenseBlocks, bottleneck, oneD=False):
+        """ Construct dense layers """
+
+        layers = []
+        for i in range(int(nDenseBlocks)):
+            if bottleneck:
+                if oneD:
+                    layers.append(Bottleneck1D(nChannels, growthRate))
+                else:
+                    layers.append(Bottleneck(nChannels, growthRate))
+            elif oneD:
+                layers.append(SingleLayer1D(nChannels, growthRate))
+            else:
+                layers.append(SingleLayer(nChannels, growthRate))
+            nChannels += growthRate
+
+        return nn.Sequential(*layers)
+
+    def forward(self, s):
+        """
+        Args:
+            s: (Variable) contains a batch of images, of dimension batch_size x 1 x 128 x params.width
+        Returns:
+            out: (Variable) dimension batch_size x num_classes
+        """
+        out = self.conv1(s)
+        out = self.trans1(self.dense1(out))
+        out = self.trans2(self.dense2(out))
+        out = self.dense3(out)
+        out = self.avg2(out)
+        out = self.bn1(out)
+        out = F.relu(out)
+        out = out.squeeze()
+        out = torch.transpose(out, 1, 2)
+        out, _ = self.lstm(out)
+        out = out.contiguous()
+        out = out.view(out.size()[0], -1)
+        return self.fc(out)
+
+
+
 
 
 
