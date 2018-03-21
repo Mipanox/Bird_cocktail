@@ -1,5 +1,9 @@
-# Bird_cocktail
+# Cocktail Party Problem of Bird Sounds
 _Stanford CS230 Win2018 project_
+
+A Convolutional-Neural-Network-based project to tackle multi-class multi-label classification of bird sounds. Implemented in [PyTorch](http://pytorch.org)
+
+_(Dated: 03/20/2018)_
 
 ## Content
 ### Introduction
@@ -11,10 +15,54 @@ _Stanford CS230 Win2018 project_
   - [Data Augmentation and Mixing](https://github.com/Mipanox/Bird_cocktail#data-augmentation-and-sampling)
 ### 2. Train the Model
   - [Build train/val/test sets](https://github.com/Mipanox/Bird_cocktail#build-datasets)
+  - [Training](https://github.com/Mipanox/Bird_cocktail#training)
+  - [Hyperparameter Tuning](https://github.com/Mipanox/Bird_cocktail#hyperparameter-tuning)
+  
+### 3. Evaluation
+  - [Synthesize Results from experiments](https://github.com/Mipanox/Bird_cocktail#synthesize-results)
+  - [Evaluation on Test Set](https://github.com/Mipanox/Bird_cocktail#evaluation-on-test-set)
+  
+### 4. Performance
+  - [Our Current Progress](https://github.com/Mipanox/Bird_cocktail#our-current-progress)
+  - [Single-label Benchmark](https://github.com/Mipanox/Bird_cocktail#single-label-benchmark)
+  - [Multi-label Model Comparison](https://github.com/Mipanox/Bird_cocktail#multi-label-model-comparison)
+  
+### 5. Epilogue
+  - [Future Perspectives](https://github.com/Mipanox/Bird_cocktail#future-perspectives)
+  
+### 6. [References](https://github.com/Mipanox/Bird_cocktail#references)
 
 ---
 ## Introduction
-Author, contact, motivation, goal, etc. (citation?)
+### Information
+Authors: Jason Chou and Chun-Hao To - Stanford University, CA, USA
+
+E-Mail Contact: jasonhc@stanford.edu
+
+If you use the content of this work, please consider citing this code repository with the following BibTeX or plaintext entry. The BibTeX entry requires the ```url``` LaTeX package.
+
+```
+@misc{birdcocktail,
+  title = {{Cocktail Party Problem of Bird Sounds}},
+  author = {Chou, Jason and To, Chun-Hao},
+  howpublished = {\url{https://github.com/Mipanox/Bird_cocktail}},
+  note = {Accessed: [Insert date here]}
+}
+
+Chou, Jason and To, Chun-Hao
+Cocktail Party Problem of Bird Sounds
+https://github.com/Mipanox/Bird_cocktail
+Accessed: <Insert date here>
+```
+
+### Prologue
+The field of bird song recognition has recently seen thriving developments thanks to the rapid growth of the database for bird songs and calls. Not only are there regular workshops held internationally, but also downloadable mobile apps [[o1](https://github.com/Mipanox/Bird_cocktail#others)], both showing promising identification capabilities of current implementations. Despite outperforming (non-expert) humans in this task of recognizing bird species by sounds, all existing implementations flounder when it faces noisy background and/or multiple birds in the sound recordings – they fail when more than one species are to be singly identified within one recording.
+
+Therefore, in this project, we endeavor to improve the existing algorithms by adding to them the power of separating distinct species within the cacophonies, an avian analogue of solving the cocktail party problem. Challenging as the problem may be, the success of the project can potentially benefit bird lovers and researchers by becoming a more practical software that does not require recordings to be pre-processed or cleaned – you record something, it outputs the answers right away. The project is thus a multi-class multi-label classification problem of recognizing constituents from mixtures of classes.
+
+One should note that, although we call it cocktail party problem, we do not aim at "extracting" the sound components, but only at being able to identify the individual birds.
+
+---
 ## 0. Installation and Prerequisites
 ### Installation
 This is a PyTorch implementation of multi-class multi-label classification of hundreds of bird species. We wrote the code in python 2.7, but should be runnable with python 3+. CUDA is optional for the project, but highly recommended to accelerate training process. All required packages can be installed using `pip`, after cloning this repository:
@@ -38,13 +86,13 @@ Before training, obtaining processible data is essential. We choose to play with
 #### Databases
 We use the following two databases:
 1. xeno-canto (hereafter XC): [https://www.xeno-canto.org](https://www.xeno-canto.org)
-2. Macaulay Library of The Cornell Lab of Ornithology (hereafter ML): [https://www.macaulaylibrary.org](https://www.macaulaylibrary.org)
+2. Macaulay Library of The Cornell Lab of Ornithology (hereafter ML): [https://www.macaulaylibrary.org](https://www.macaulaylibrary.org) _(Note: As of this writing, none of the ML data have been used in either training or evaluation)_
 
 #### Download and Conversion
 This [notebook](https://github.com/Mipanox/Bird_cocktail/blob/master/notebooks/data_preparation.ipynb) 
 summarizes the processes of obtaining the data (`mp3` files) and converting them to `wav` files
 
-_(Note: The conversion step is no longer needed since we now use `librosa` package in processing audios (see [below](https://github.com/Mipanox/Bird_cocktail#data-pre-processing)))_
+_(Note: The conversion step is no longer necessary since we now use `librosa` package in processing audios (see [below](https://github.com/Mipanox/Bird_cocktail#data-pre-processing)))_
 
 ### Data Pre-processing
 Because we are tackling the problem of recognizing individual bird species in mixtures of sounds (i.e. multi-label classification), we can synthesize datasets by manually superposing the audio clips of different bird species, with some random weights (relative intensity), etc. We choose to do this on-the-fly in the training process, and in the Fourier domain, viz., from spectrograms. Therefore, we will pre-process our raw data--audios, by transforming them into spectrograms
@@ -136,3 +184,39 @@ split_dir
 +---test/
 
 ```
+
+### Training
+
+### Hyperparameter Tuning
+
+
+
+_[(back to top)](https://github.com/Mipanox/Bird_cocktail#content)_
+
+---
+## 6. References
+### Papers
+[p1] Huang _et al._, Densely Connected Convolutional Networks. (2016). arXiv: [1608.06993](https://arxiv.org/abs/1608.06993)
+
+[p2] He _et al._, Deep Residual Learning for Image Recognition. (2015). arXiv: [1512.03385](https://arxiv.org/abs/1512.03385)
+
+[p3] Li _et al._, Improving Pairwise Ranking for Multi-label Image Classification (2017). arXiv: [1704.03135](https://arxiv.org/abs/1704.03135)
+
+[p4] Szegedy _et al._, Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning. (2016). arXiv: [1602.07261](https://arxiv.org/abs/1602.07261)
+
+### Repositories
+[r1] Stanford CS230 Example Code [Repository](https://github.com/cs230-stanford/cs230-code-examples/tree/master/pytorch/vision)
+
+[r2] Kahl _et al._, [Working Notes](http://ceur-ws.org/Vol-1866/paper_143.pdf) of BirdCLEF. (2017). Github [repository](https://github.com/kahst/BirdCLEF2017)
+
+[r3] Amos and Kolter, A PyTorch Implementation of DenseNet. Github [repository](https://github.com/bamos/densenet.pytorch); also andreaazzini's [repository](https://github.com/andreaazzini/multidensenet)
+
+[r4] Tensorflow Model Zoo for Torch7 and PyTorch. Github [repository](https://github.com/Cadene/tensorflow-model-zoo.torch)
+
+### Others
+[o1] e.g. [BirdCLEF](http://www.imageclef.org/lifeclef/2017/bird), [EADM](http://sabiod.univ-tln.fr/EADM/), [BirdGenie](http://www.birdgenie.com), [Bird Song Id USA](http://us.isoperlaapps.com/BirdSongIdUSA.html); and proceedings/publications therein
+
+[o2] [xeno-canto](https://www.xeno-canto.org) database of bird sounds
+
+[o3] Official PyTorch [tutorials](http://pytorch.org/tutorials/), [documentation](http://pytorch.org/docs/0.3.1/), and [source code](https://github.com/pytorch/pytorch)
+
