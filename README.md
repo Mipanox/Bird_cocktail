@@ -245,7 +245,8 @@ python synthesize_results.py --parent_dir <path-to-parent-folder-with-various-ex
 ```
 
 The code will generate a table which summarizes the metrics on the validation set. Something like:
-|                                                        |       f1 |   recall |        loss |   precision |   accuracy |
+
+|               model                                    |       f1 |   recall |        loss |   precision |   accuracy |
 |:-------------------------------------------------------|---------:|---------:|------------:|------------:|-----------:|
 | experiments/multi-label/densenet_03    | 0.579357 | 0.712428 | 0.453257    |    0.528843 |   0.773568 |
 | experiments/multi-label/densenet_02    | 0.503218 | 0.669583 | 0.529402    |    0.442973 |   0.718413 |
@@ -277,11 +278,11 @@ These 40,000 spectrograms correspond to roughly 25+ hours of field recordings. T
 ### Single-label Benchmark
 Quoting the best-ever results, the [ResNet_02](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/single-label/resnet_02_new) achieved 1.000 and 0.942 accuracy. Below shows an example training curve (in the middle of training):
 
-<img alighn="center" src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/sing_res_07_tb.png" width="500"/> 
+<img align="center" src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/sing_res_07_tb.png" width="500"/> 
 
 and the best confusion matrix evaluated on test set (notice the log-scale colorbar):
 
-<img alighn="center" src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/sing_res_02_cm.png" width="450"/> 
+<img align="center" src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/sing_res_02_cm.png" width="450"/> 
 
 
 ### Multi-label Model Comparison
