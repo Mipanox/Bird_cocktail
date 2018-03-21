@@ -7,12 +7,17 @@ _(Dated: 03/20/2018)_
 
 ## Content
 ### Introduction
+  - [Authors, Contact, and Citation](https://github.com/Mipanox/Bird_cocktail#information)
+  - [Motivation and Goal](https://github.com/Mipanox/Bird_cocktail#prologue)
+  
 ### 0. Installation and Prerequisites
   - [Installation](https://github.com/Mipanox/Bird_cocktail#installation)
+  
 ### 1. Data
   - [Data Preparation](https://github.com/Mipanox/Bird_cocktail#data-preparation)
   - [Data Pre-processing](https://github.com/Mipanox/Bird_cocktail#data-pre-processing)
   - [Data Augmentation and Mixing](https://github.com/Mipanox/Bird_cocktail#data-augmentation-and-sampling)
+  
 ### 2. Train the Model
   - [Build train/val/test sets](https://github.com/Mipanox/Bird_cocktail#build-datasets)
   - [Training](https://github.com/Mipanox/Bird_cocktail#training)
@@ -30,7 +35,7 @@ _(Dated: 03/20/2018)_
 ### 5. Epilogue
   - [Future Perspectives](https://github.com/Mipanox/Bird_cocktail#future-perspectives)
   
-### 6. [References](https://github.com/Mipanox/Bird_cocktail#references)
+### 6. [References](https://github.com/Mipanox/Bird_cocktail#6-references-1)
 
 ---
 ## Introduction
@@ -186,8 +191,38 @@ split_dir
 ```
 
 ### Training
+To train a model, first create a directory for under the experiments directory (or anywhere else you like). It should contain a file ```params.json``` which sets the hyperparameters for the experiment. Some examples can be found in the [directory](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments).
+
+Run the following line to start the experiment, specifying the path to the hyperparameter ```params.json``` file:
+```
+python train.py --data_dir <path_to_splitted_datasets> --model_dir <path_to_the_json_file>
+```
+It will instantiate a model and train it on the training set following the hyperparameters specified in ```params.json```. It will also evaluate some metrics on the validation set. You may wish to take a look inside the `train.py` as well as the `evaluate.py` codes for details like dumping tensorboard logs, etc.
+
+Currently, we support training with the following models, loss functions, optimizers, and modes _(with the relevant hyperparameters given)_:
+
+- **Modes**
+  1. Single-label: `if_single: 1`. Only uses cross-entropy loss. Binary relevance models listed below are not suitable
+  2. Multi-label: `(none; default)`
+- **Models** _(each with their own tunable hyperparameters)_
+  1. DenseNet [[p1,r3,o3]](https://github.com/Mipanox/Bird_cocktail#papers): `model: 1`
+  2. SqueezeNet [[p5,o3]](https://github.com/Mipanox/Bird_cocktail#papers): `model: 2`
+  3. Inception-v4 [[p5,r4]](https://github.com/Mipanox/Bird_cocktail#papers): `model: 3`
+  4. InceptionResNet [[p5,r4]](https://github.com/Mipanox/Bird_cocktail#papers): `model: 4`
+  5. ResNet [[p2,o3]](https://github.com/Mipanox/Bird_cocktail#papers): `model: 5`
+  6. DenseNet+BinaryRelevance: `model: 6`
+  7. ResNet+BinaryRelevance: `model: 7`
+- **Loss Functions**
+  1. Binary-Cross-Entropy (BCE) loss: `(none; default)`
+  2. Weighted-Approximate-Ranking Pairwise (WARP) loss [[p7]](https://github.com/Mipanox/Bird_cocktail#papers): `loss_fn: 1`
+  3. Log-Sum-Exponential Pairwise (LSEP) loss [[p3]](https://github.com/Mipanox/Bird_cocktail#papers): `loss_fn: 2`
+- **Optimizers**
+  1. Adam: `optimizer: 1` with optional L2 penalty `alpha`
+  2. Stochastic Gradient Descent (SGD): `optimizer: 2` with optional L2 penalty `alpha`
+
 
 ### Hyperparameter Tuning
+Fine tuning a model is as simple as running another experiment. Simply create another directory containing another `params.json`, and run the training script above with the proper path.
 
 
 
@@ -200,9 +235,15 @@ _[(back to top)](https://github.com/Mipanox/Bird_cocktail#content)_
 
 [p2] He _et al._, Deep Residual Learning for Image Recognition. (2015). arXiv: [1512.03385](https://arxiv.org/abs/1512.03385)
 
-[p3] Li _et al._, Improving Pairwise Ranking for Multi-label Image Classification (2017). arXiv: [1704.03135](https://arxiv.org/abs/1704.03135)
+[p3] Li _et al._, Improving Pairwise Ranking for Multi-label Image Classification. (2017). arXiv: [1704.03135](https://arxiv.org/abs/1704.03135)
 
-[p4] Szegedy _et al._, Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning. (2016). arXiv: [1602.07261](https://arxiv.org/abs/1602.07261)
+[p4] Zhang _et al._, Binary relevance for multi-label learning: an overview. ([2017](https://doi.org/10.1007/s11704-017-7031-7)). Frontiers of Computer Science, pp. 1-12
+
+[p5] Szegedy _et al._, Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning. (2016). arXiv: [1602.07261](https://arxiv.org/abs/1602.07261)
+
+[p6] Iandole _et al._, SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and <0.5MB model size. (2016) .arXiv: [1602.07360](https://arxiv.org/abs/1602.07360)
+
+[p7] Gong _et al._, Deep Convolutional Ranking for Multilabel Image Annotation. (2013). arXiv: [1312.4894](https://arxiv.org/abs/1312.4894)
 
 ### Repositories
 [r1] Stanford CS230 Example Code [Repository](https://github.com/cs230-stanford/cs230-code-examples/tree/master/pytorch/vision)
