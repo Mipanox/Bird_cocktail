@@ -277,12 +277,11 @@ These 40,000 spectrograms correspond to roughly 25+ hours of field recordings. T
 
 ### Single-label Benchmark
 Quoting the best-ever results, the [ResNet_02](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/single-label/resnet_02_new) achieved 1.000 and 0.942 accuracy. Below shows an example training curve (in the middle of training):
-
-<img align="center" src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/sing_res_07_tb.png" width="500"/> 
+<p align="center"><img src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/sing_res_07_tb.png" width="500"/></p> 
 
 and the best confusion matrix evaluated on test set (notice the log-scale colorbar):
 
-<img align="center" src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/sing_res_02_cm.png" width="450"/> 
+<p align="center"><img align="center" src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/sing_res_02_cm.png" width="450"/></p> 
 
 
 ### Multi-label Model Comparison
