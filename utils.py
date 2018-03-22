@@ -149,6 +149,73 @@ def load_checkpoint(checkpoint, model, optimizer=None):
     return checkpoint
 
 
+######################
+# tensorboard logger #
+import tensorflow as tf
+
+class Logger(object):
+    
+    def __init__(self, log_dir):
+        """Create a summary writer logging to log_dir."""
+        self.writer = tf.summary.FileWriter(log_dir)
+
+    def scalar_summary(self, tag, value, step):
+        """Log a scalar variable."""
+        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])
+        self.writer.add_summary(summary, step)
+
+    def image_summary(self, tag, images, step):
+        """Log a list of images."""
+
+        img_summaries = []
+        for i, img in enumerate(images):
+            # Write the image to a string
+            try:
+                s = StringIO()
+            except:
+                s = BytesIO()
+            scipy.misc.toimage(img).save(s, format="png")
+
+            # Create an Image object
+            img_sum = tf.Summary.Image(encoded_image_string=s.getvalue(),
+                                       height=img.shape[0],
+                                       width=img.shape[1])
+            # Create a Summary value
+            img_summaries.append(tf.Summary.Value(tag='%s/%d' % (tag, i), image=img_sum))
+
+        # Create and write Summary
+        summary = tf.Summary(value=img_summaries)
+        self.writer.add_summary(summary, step)
+        
+    def histo_summary(self, tag, values, step, bins=1000):
+        """Log a histogram of the tensor of values."""
+
+        # Create a histogram using numpy
+        counts, bin_edges = np.histogram(values, bins=bins)
+
+        # Fill the fields of the histogram proto
+        hist = tf.HistogramProto()
+        hist.min = float(np.min(values))
+        hist.max = float(np.max(values))
+        hist.num = int(np.prod(values.shape))
+        hist.sum = float(np.sum(values))
+        hist.sum_squares = float(np.sum(values**2))
+
+        # Drop the start of the first bin
+        bin_edges = bin_edges[1:]
+
+        # Add bin edges and counts
+        for edge in bin_edges:
+            hist.bucket_limit.append(edge)
+        for c in counts:
+            hist.bucket.append(c)
+
+        # Create and write Summary
+        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
+        self.writer.add_summary(summary, step)
+        self.writer.flush()
+
+
 ##############################
 # Modified WARP loss utility 
 # - Reference: https://arxiv.org/pdf/1312.4894.pdf
@@ -361,5 +428,39 @@ def confusion_matrix(outputs, labels):
     cm = cm.astype('float')*10 / cm.sum(axis=1)[:, np.newaxis]
     cm = np.nan_to_num(cm, copy=True)
     cm = cm.astype('int')
-    
+
     return cm
+
+## Display confusion matrix
+import matplotlib.pyplot as plt
+from mpl_toolkits import axes_grid1
+def add_colorbar(im, label, aspect=20, pad_fraction=0.5, fontsize=28,**kwargs):
+    """Add a vertical color bar to an image plot."""
+    divider = axes_grid1.make_axes_locatable(im.axes)
+    width = axes_grid1.axes_size.AxesY(im.axes, aspect=1./aspect)
+    pad = axes_grid1.axes_size.Fraction(pad_fraction, width)
+    current_ax = plt.gca()
+    cax = divider.append_axes("right", size=width, pad=pad)
+    plt.sca(current_ax) 
+    
+    cbar = im.axes.figure.colorbar(im, cax=cax, **kwargs)
+    cbar.ax.tick_params(labelsize=fontsize)
+    cbar.set_label(label,size=fontsize)
+    return cbar
+
+from matplotlib.colors import LogNorm
+def plot_cm(cm,labelsize=28,if_log=True,**kwargs):
+    """ Plot confusion matrix """
+    plt.figure(figsize=(10,10))
+    if if_log:
+        im = plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues, norm=LogNorm())
+        add_colorbar(im, label='log prob.')
+    else:
+        im = plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+        add_colorbar(im, label='prob.')
+    
+
+    plt.ylabel('True label', fontsize=32)
+    plt.xlabel('Predicted label', fontsize=32)
+    plt.xticks(fontsize=labelsize); plt.yticks(fontsize=labelsize)
+    plt.show()

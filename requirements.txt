@@ -10,4 +10,3 @@ tqdm
 sklearn
 tensorflow
 tensorboard
-tensorboardX

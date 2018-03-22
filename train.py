@@ -22,7 +22,7 @@ import model.net as net
 import model.data_loader as data_loader
 from evaluate import evaluate
 
-from tensorboardX import SummaryWriter
+# from tensorboardX import SummaryWriter
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir'    , default='datasets/spec_split'   , help="Directory containing the splitted dataset")
@@ -31,9 +31,9 @@ parser.add_argument('--num_classes' , default=300, type=int, help="Numer of clas
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before training")
 
-writer = SummaryWriter('tensorboardlogs/trainlog')
+# writer = SummaryWriter('tensorboardlogs/trainlog')
 
-def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
+def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch, logger):
     """Train the model on `num_steps batches
 
     Args:
@@ -92,7 +92,8 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params, epoch):
                 ## tensorboard logging
                 niter = epoch*len(dataloader)+i
                 for tag, value in summary_batch.items():
-                    writer.add_scalar(tag, value, niter)
+                    logger.scalar_summary(tag, value, niter)
+                    # writer.add_scalar(tag, value, niter)
 
                 #-- Log values and gradients of the parameters (histogram)
                 # for name, param in model.named_parameters():
@@ -144,6 +145,10 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
     best_val_met = 0.0
 
+    ## tensorboard loggers
+    logger_train = utils.Logger(model_dir+"tensorboardlogs/train/")
+    logger_eval  = utils.Logger(model_dir+"tensorboardlogs/eval/")
+
     scheduler = None
     if hasattr(params,'lr_decay_gamma'):
         scheduler = StepLR(optimizer, step_size=params.lr_decay_step, gamma=params.lr_decay_gamma)
@@ -157,10 +162,10 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             scheduler.step()
 
         # compute number of batches in one epoch (one full pass over the training set)
-        train(model, optimizer, loss_fn, train_dataloader, metrics, params, epoch)
+        train(model, optimizer, loss_fn, train_dataloader, metrics, params, epoch, logger_train)
 
         # Evaluate for one epoch on validation set
-        val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params, args.num_classes, epoch)
+        val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params, args.num_classes, epoch, logger_eval)
 
         if hasattr(params,'if_single'): 
             if params.if_single == 1: # single-label
@@ -273,7 +278,7 @@ if __name__ == '__main__':
     ## tensorboar logging
     dummy_input = Variable(torch.rand(params.batch_size,1,128,params.width).cuda(async=True) if params.cuda else \
                            torch.rand(params.batch_size,1,128,params.width))
-    writer.add_graph(model, (dummy_input, ))
+    # writer.add_graph(model, (dummy_input, ))
 
     # fetch loss function and metrics
     if hasattr(params,'if_single'): 
@@ -298,5 +303,5 @@ if __name__ == '__main__':
     train_and_evaluate(model, train_dl, val_dl, optimizer, loss_fn, metrics, params, args.model_dir,
                        args.restore_file)
 
-    writer.export_scalars_to_json("./all_scalars.json")
-    writer.close()
+    # writer.export_scalars_to_json("./all_scalars.json")
+    # writer.close()

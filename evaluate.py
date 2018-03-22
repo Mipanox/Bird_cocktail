@@ -17,7 +17,7 @@ import utils
 import model.net as net
 import model.data_loader as data_loader
 
-from tensorboardX import SummaryWriter
+# from tensorboardX import SummaryWriter
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir'    , default='datasets/spec_split'   , help="Directory containing the splitted dataset")
@@ -26,9 +26,9 @@ parser.add_argument('--num_classes' , default=300, type=int, help="Numer of clas
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
 
-writer = SummaryWriter('tensorboardlogs/vallog')
+# writer = SummaryWriter('tensorboardlogs/vallog')
 
-def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch, eva=False):
+def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch, logger, eva=False):
     """Evaluate the model on `num_steps` batches.
 
     Args:
@@ -69,7 +69,8 @@ def evaluate(model, loss_fn, dataloader, metrics, params, num_classes, epoch, ev
             ## tensorboard logging
             niter = epoch*len(dataloader)+i
             for tag, value in summary_batch.items():
-                writer.add_scalar(tag, value, niter)
+                logger.scalar_summary(tag, value, niter)
+                # writer.add_scalar(tag, value, niter)
 
         if hasattr(params,'if_single'): 
             if params.if_single == 1: # single-label
