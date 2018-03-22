@@ -3,7 +3,7 @@ _Stanford CS230 Win2018 project_
 
 A Convolutional-Neural-Network-based project to tackle multi-class multi-label classification of bird sounds. Implemented in [PyTorch](http://pytorch.org)
 
-_(Dated: 03/20/2018)_
+_(Dated: 03/21/2018)_
 
 # Content
 ## Prologue
@@ -305,7 +305,7 @@ _[(back to top)](https://github.com/Mipanox/Bird_cocktail#content)_
 ---
 ## 5. Reproducing Our Results
 ### Download Our Datasets
-The datasets used in generating results shown in this README can be found [here](https://drive.google.com/open?id=1cBIc1meaP2Aj1CRFIGB-ZHB9stoJN6eO)
+The datasets (pre-processed spectrograms) used in generating results shown in this README can be found [here](https://drive.google.com/open?id=1cBIc1meaP2Aj1CRFIGB-ZHB9stoJN6eO). They were converted from > 25 hours of `mp3` recordings from xeno-canto database and consist of > 40,000 pre-processed spectrograms and numerous noise samples.
 
 ### Using the Pre-trained Models
 Download the hyperparameters and the best/last models [here](https://drive.google.com/open?id=1g61n2wXKkL3DQQ4_9Wf1YXSwqnkXojeo)
