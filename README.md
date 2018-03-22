@@ -204,7 +204,7 @@ To train a model, first create a directory for under the experiments directory (
 
 Run the following line to start the experiment, specifying the path to the hyperparameter ```params.json``` file:
 ```
-python train.py --data_dir <path_to_splitted_datasets> --model_dir <path_to_the_json_file>
+python train.py --data_dir <path_to_splitted_datasets> --model_dir <path_to_the_folder_of_json_file>
 ```
 It will instantiate a model and train it on the training set following the hyperparameters specified in ```params.json```. It will also evaluate some metrics on the validation set. The results will be stored in the same folder containing `params.json`, including metrics and validation sets, training logs, tensorboard logs. You can take a look inside the `train.py` as well as the `evaluate.py` codes for more details.
 
@@ -256,7 +256,7 @@ The code will generate a table which summarizes the metrics on the validation se
 ### Evaluation on Test Set
 Once you've run many experiments and selected your best model and hyperparameters based on the performance on the validation set, you can finally evaluate the performance of your model on the test set:
 ```
-python evaluate.py --data_dir <path-to-test-data> --model_dir <path-to-json-of-the-selected-model>
+python evaluate.py --data_dir <path-to-test-data> --model_dir <path-to-folder-of-the-selected-model>
 ```
 
 For single-label problem specifically, we have confusion matrix computed for you. Upon completing either training or evaluation, confusion matrices will be stored in folders like `cm_val` or `cm_test`. You can plot each of them using the function in `utils.py` by calling
@@ -290,7 +290,7 @@ The following table summarizes the performance of some noteworthy models on vali
 
 
 |               model        |   loss fn |       f1 |   recall |   precision | regularization | comments |
-|:--------------------------:|:---------:|:--------:|:----- --:|:-----------:|:--------------:|:---------|
+|:--------------------------:|:---------:|:--------:|:--------:|:-----------:|:--------------:|:---------|
 | [ResNet+BR_02](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_3_) | BCE | **0.831** | 0.804 | **0.904** | None | multiple stages of training from [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02) and [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_2) |
 | [DenseNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/lsep_dense_06) | LSEP | 0.735 | 0.686 | 0.856 | Early Stopping | high variance |
 | [DenseNet+LSTM](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/densenet_blstm) | LSEP | 0.654 | 0.579 | 0.651 | L2 | |
@@ -298,22 +298,38 @@ The following table summarizes the performance of some noteworthy models on vali
 | [ResNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_01) | BCE  | 0.770 | **0.854**| 0.741 | L2 | Training fastest |
 | [DenseNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/densenet_07) | BCE | 0.703 | 0.729 | 0.734 | Early stopping | high variance |
 
-
+The conclusions to draw from the various models are left to the users.
 
 _[(back to top)](https://github.com/Mipanox/Bird_cocktail#content)_
 
 ---
 ## 5. Reproducing Our Results
 ### Download Our Datasets
+The datasets used in generating results shown in this README can be found [here](https://drive.google.com/open?id=1cBIc1meaP2Aj1CRFIGB-ZHB9stoJN6eO)
 
 ### Using the Pre-trained Models
+Download the hyperparameters and the best/last models [here](https://drive.google.com/open?id=1g61n2wXKkL3DQQ4_9Wf1YXSwqnkXojeo)
 
+There are two ways of using them: 
+(1) As initial weights: It is possible to re-train the model from a given status of weights. We recommend renaming the `pth.tar` file of your selection to prevent overwritting it with your own model run. For instance, to initialize training from `renamed_best.pth.tar`, which should reside in the same folder, run:
+```
+python train.py --data_dir <path_to_splitted_datasets> --model_dir <path_to_this_model_folder> --restore_file renamed_best
+```
+
+(2) For evaluation on test set (can omit the `--restore_file *` argument if using the `best.pth.rar`):
+```
+python evaluate.py --data_dir <path-to-test-data> --model_dir <path-to-model-folder> --restore_file some_model
+```
+where there is supposed to be a file called `some_model.pth.rar`
 
 _[(back to top)](https://github.com/Mipanox/Bird_cocktail#content)_
 
 ---
 ## 6. Epilogue
 ### Future Perspectives
+Given that we can only do 10 species at this point, which is not pratical for real-life situations, we want to scale up the model to at least 100 species (i.e. multi-class multi-label classification for 100 species, which is a reasonable number for any given local region). On the other hand, it is suggested that we can compare our models to some baseline models, e.g. traditional machine learning models, to have a better feeling of how far have we exceeded "so-so" performance.
+
+Finally, the authors would like to thank Amazon Web Services and the Stanford CS230, 2018 Winter course teaching staff for their generous support of computing resources and guidelines for project, as well as the extremely helpful example codes and tutorials.
 
 _[(back to top)](https://github.com/Mipanox/Bird_cocktail#content)_
 
