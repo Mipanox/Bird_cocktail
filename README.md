@@ -3,7 +3,7 @@ _Stanford CS230 Win2018 project_
 
 A Convolutional-Neural-Network-based project to tackle multi-class multi-label classification of bird sounds. Implemented in [PyTorch](http://pytorch.org)
 
-_(Dated: 03/20/2018)_
+_(Dated: 03/21/2018)_
 
 # Content
 ## Prologue
@@ -289,9 +289,9 @@ and the best confusion matrix evaluated on test set (notice the log-scale colorb
 The following table summarizes the performance of some noteworthy models on validation set (not meant to be complete!):
 
 
-|               model        |   loss fn |       f1 |   recall |   precision | regularization | comments |
+|               model        |   loss |       f1 |   recall |   precision | regularization | comments |
 |:--------------------------:|:---------:|:--------:|:--------:|:-----------:|:--------------:|:---------|
-| [ResNet+BR_02](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_3_) | BCE | **0.831** | 0.804 | **0.904** | None | multiple stages of training from [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02) and [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_2) |
+| [ResNet+BR](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_3_) | BCE | **0.831** | 0.804 | **0.904** | None | multiple stages of training from [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02) and [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_2) |
 | [DenseNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/lsep_dense_06) | LSEP | 0.735 | 0.686 | 0.856 | Early Stopping | high variance |
 | [DenseNet+LSTM](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/densenet_blstm) | LSEP | 0.654 | 0.579 | 0.651 | L2 | |
 | [ResNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/lsep_resnet_01) | LSEP | 0.793 | 0.759 | 0.830 | L2 | |
@@ -305,12 +305,13 @@ _[(back to top)](https://github.com/Mipanox/Bird_cocktail#content)_
 ---
 ## 5. Reproducing Our Results
 ### Download Our Datasets
-The datasets used in generating results shown in this README can be found [here](https://drive.google.com/open?id=1cBIc1meaP2Aj1CRFIGB-ZHB9stoJN6eO)
+The datasets (pre-processed spectrograms) used in generating results shown in this README can be found [here](https://drive.google.com/open?id=1cBIc1meaP2Aj1CRFIGB-ZHB9stoJN6eO). They were converted from > 25 hours of `mp3` recordings from xeno-canto database and consist of > 40,000 pre-processed spectrograms and numerous noise samples.
 
 ### Using the Pre-trained Models
 Download the hyperparameters and the best/last models [here](https://drive.google.com/open?id=1g61n2wXKkL3DQQ4_9Wf1YXSwqnkXojeo)
 
 There are two ways of using them: 
+
 (1) As initial weights: It is possible to re-train the model from a given status of weights. We recommend renaming the `pth.tar` file of your selection to prevent overwritting it with your own model run. For instance, to initialize training from `renamed_best.pth.tar`, which should reside in the same folder, run:
 ```
 python train.py --data_dir <path_to_splitted_datasets> --model_dir <path_to_this_model_folder> --restore_file renamed_best
