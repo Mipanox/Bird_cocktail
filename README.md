@@ -311,6 +311,7 @@ The datasets used in generating results shown in this README can be found [here]
 Download the hyperparameters and the best/last models [here](https://drive.google.com/open?id=1g61n2wXKkL3DQQ4_9Wf1YXSwqnkXojeo)
 
 There are two ways of using them: 
+
 (1) As initial weights: It is possible to re-train the model from a given status of weights. We recommend renaming the `pth.tar` file of your selection to prevent overwritting it with your own model run. For instance, to initialize training from `renamed_best.pth.tar`, which should reside in the same folder, run:
 ```
 python train.py --data_dir <path_to_splitted_datasets> --model_dir <path_to_this_model_folder> --restore_file renamed_best
