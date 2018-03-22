@@ -291,7 +291,7 @@ The following table summarizes the performance of some noteworthy models on vali
 
 |               model        |   loss |       f1 |   recall |   precision | regularization | comments |
 |:--------------------------:|:---------:|:--------:|:--------:|:-----------:|:--------------:|:---------|
-| [ResNet+BR_02](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_3_) | BCE | **0.831** | 0.804 | **0.904** | None | multiple stages of training from [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02) and [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_2) |
+| [ResNet+BR](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_3_) | BCE | **0.831** | 0.804 | **0.904** | None | multiple stages of training from [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02) and [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_2) |
 | [DenseNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/lsep_dense_06) | LSEP | 0.735 | 0.686 | 0.856 | Early Stopping | high variance |
 | [DenseNet+LSTM](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/densenet_blstm) | LSEP | 0.654 | 0.579 | 0.651 | L2 | |
 | [ResNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/lsep_resnet_01) | LSEP | 0.793 | 0.759 | 0.830 | L2 | |
