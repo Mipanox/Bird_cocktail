@@ -289,7 +289,7 @@ and the best confusion matrix evaluated on test set (notice the log-scale colorb
 The following table summarizes the performance of some noteworthy models on validation set (not meant to be complete!):
 
 
-|               model        |   loss fn |       f1 |   recall |   precision | regularization | comments |
+|               model        |   loss |       f1 |   recall |   precision | regularization | comments |
 |:--------------------------:|:---------:|:--------:|:--------:|:-----------:|:--------------:|:---------|
 | [ResNet+BR_02](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_3_) | BCE | **0.831** | 0.804 | **0.904** | None | multiple stages of training from [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02) and [this](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/resnet_br_02_2) |
 | [DenseNet](https://github.com/Mipanox/Bird_cocktail/tree/master/experiments/AWS-experiments/multi-label/lsep_dense_06) | LSEP | 0.735 | 0.686 | 0.856 | Early Stopping | high variance |
