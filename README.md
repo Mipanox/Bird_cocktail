@@ -5,6 +5,31 @@ A Convolutional-Neural-Network-based project to tackle multi-class multi-label c
 
 _(Dated: 03/21/2018)_
 
+---
+## Summary
+More often than not birds move in groups and make sounds together. Being able to recognize individual bird sounds in the natural mixture is thus of great practical values for bird lovers and researchers. We train Convolutional Neural Networks with different schemes on spectrograms of multi-species bird sounds to tackle this multi-class multi-label classiﬁcation problem. Variations of ResNet combined with binary relevance method prove to be the most powerful, while changing loss functions and/or details of network architectures does not help improve the performance signiﬁcantly. For a total of 10 species with 1–5 species present simultaneously in one segment of sound, our models achieve F1 score, precision and recall of 0.83, 0.90 and 0.85 respectively, considerably outperforming similar multi-label classiﬁcation tasks on photo-images.
+
+## Data preparation
+### Pre-processing
+We obtain `mp3` recordings of 10 common local "loud" bird species from the `xeno-canto` database, each capturing bird songs, calls or other representative sounds (e.g. woodpecker’s drumming). We use magnitude spectrograms as inputs for models. This is done by ﬁrst segmenting recordings into 3-sec chunks, then applying Short-Time Fourier Transform (SFTF) to convert them into spectrograms – a time versus frequency plot, sampled on a grey-scale 2D image of dimensions 128×192. 
+
+We follow the heuristics in Kahl et al.’s work on single-label classiﬁcation of bird sounds for separating signals and noises. The algorithm does median blur, median threshold, spot removal and morphological closing, based on which it judges whether there is strong-enough signal contained in one spectrogram. Figure below illustrates the idea.
+<p align="center"><img src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/eg_signal_preproc.png" width="600"/></p> 
+
+### Synthesization
+we synthesize our own multi-species spectrograms from the un-processed signal and noise spectrograms. 1 – 5 spectrograms are randomly chosen and weighted, then superposed together with randomly chosen noise sample, to form a single input for model. Mathematics ensures almost countless possible combinations, which means we can have arbitrary augmentation. Finally, a random cropping is optionally done to further augment the data. An example 3-species synthesized spectrogram is shown below:
+<p align="center"><img src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/eg_syn_spec_3birds.png" width="500"/></p> 
+
+
+## Models
+Our representative models are combinations of (simpliﬁed) ResNet, DenseNet, and BLSTM, taking advantage of each architecture -- e.g. the sequential nature of sound is exploited in BLSTM.
+<p align="center"><img src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/models.png" width="700"/></p> 
+
+## Results
+Summary of F1 score, precision, and recall of each neural network. The best values among all neural networks are highlighted in red. For more details, see below.
+<p align="center"><img src="https://github.com/Mipanox/Bird_cocktail/blob/master/images/results.png" width="700"/></p> 
+
+---
 # Content
 ## Prologue
 ### Introduction
